@@ -4,14 +4,20 @@
 
 using namespace std;
 
-int main() {
-	vector<Usuario> usuarios; // almacenamiento temporal en memoria
+int main(int argc, char **argv) {
+	
+	vector<Usuario> usuarios = {
+    {1, "Juan Perez", "jperez", "1234", "ADMIN"},
+    {2, "Ana Gomez", "agomez", "abcd", "GENERAL"},
+    {3, "Luis Torres", "ltorres", "pass", "GENERAL"}
+	};
+
 	while (true) {
 		int opcion = mostrarMenuPrincipal();
 		switch (opcion) {
 			case 0:
 				cout << "Saliendo...\n";
-				return;
+				return 0;
 			case 1:
 				pantallaIngresarUsuario(usuarios);
 				break;

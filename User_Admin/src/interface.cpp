@@ -2,6 +2,7 @@
 #include <limits>
 #include <algorithm>
 #include "interface.h"
+#include "users.h"
 
 using namespace std;
 
@@ -37,27 +38,27 @@ int mostrarMenuPrincipal() {
 
 void pantallaIngresarUsuario(vector<Usuario>& usuarios) {
 	cout << "\n=== Ingreso de usuarios ===\n";
-	Usuario u{};
-	u.id = usuarios.empty() ? 1 : (usuarios.back().id + 1); // provisional
-	cout << "Id: " << u.id << '\n';
-	cout << "Nombre: "; getline(cin, u.nombre);
-	cout << "Username: "; getline(cin, u.username);
-	cout << "Password: "; getline(cin, u.password);
+	int id = usuarios.empty() ? 1 : (usuarios.back().id + 1);
+    string nombre, username, password, perfil;
+
+    cout << "Id: " << id << '\n';
+    cout << "Nombre: "; getline(cin, nombre);
+    cout << "Username: "; getline(cin, username);
+    cout << "Password: "; getline(cin, password);
 	// Validación de perfil
 	while (true) {
-		cout << "Perfil (ADMIN | GENERAL): "; getline(cin, u.perfil);
+		cout << "Perfil (ADMIN | GENERAL): "; getline(cin, perfil);
 		// quitar espacios
-		while (!u.perfil.empty() && isspace(static_cast<unsigned char>(u.perfil.front()))) u.perfil.erase(u.perfil.begin());
-		while (!u.perfil.empty() && isspace(static_cast<unsigned char>(u.perfil.back()))) u.perfil.pop_back();
-		for (auto &c : u.perfil) c = toupper(static_cast<unsigned char>(c));
-		if (u.perfil == "ADMIN" || u.perfil == "GENERAL") break;
+		while (!perfil.empty() && isspace(static_cast<unsigned char>(perfil.front()))) perfil.erase(perfil.begin());
+		while (!perfil.empty() && isspace(static_cast<unsigned char>(perfil.back()))) perfil.pop_back();
+		for (auto &c : perfil) c = toupper(static_cast<unsigned char>(c));
+		if (perfil == "ADMIN" || perfil == "GENERAL") break;
 		cout << "Tipo de perfil inválido. Debe ser ADMIN o GENERAL. Intente nuevamente.\n";
 	}
 	cout << "\n1) Guardar     2) Cancelar\nOpción : ";
 	int op = leerEnteroSeguro();
 	if (op == 1) {
-		// Solo agregamos en memoria temporal (no persistente por ahora)
-		usuarios.push_back(u);
+		agregarUsuario(usuarios, id, nombre, username, password, perfil);
 		cout << "Usuario agregado en memoria.\n";
 	} else {
 		cout << "Operación cancelada.\n";
@@ -73,7 +74,8 @@ void pantallaListarUsuarios(const vector<Usuario>& usuarios) {
 	} else {
 		for (const auto& u : usuarios) {
 			cout.width(4); cout << u.id; cout << "  ";
-			string nombre = u.nombre; if (nombre.size() > 20) nombre = nombre.substr(0,20);
+			string nombre = u.nombre; 
+			if (nombre.size() > 20) nombre = nombre.substr(0,20);
 			cout.width(20); cout.setf(ios::left); cout << nombre; cout.unsetf(ios::left);
 			cout << ' ' << u.perfil << '\n';
 		}
@@ -92,6 +94,7 @@ void pantallaEliminarUsuario(vector<Usuario>& usuarios) {
 	}
 	cout << "ID usuario a borrar: ";
 	int id = leerEnteroSeguro();
+	// Buscar usuario por id
 	auto it = find_if(usuarios.begin(), usuarios.end(), [&](const Usuario& u){ return u.id == id; });
 	if (it == usuarios.end()) {
 		cout << "Usuario no encontrado.\n";
@@ -103,8 +106,12 @@ void pantallaEliminarUsuario(vector<Usuario>& usuarios) {
 	cout << "\n1) Guardar     2) Cancelar\nOpcion : ";
 	int op = leerEnteroSeguro();
 	if (op != 1) { cout << "Operación cancelada.\n"; return; }
-	usuarios.erase(it);
-	cout << "Usuario eliminado de la lista en memoria.\n";
+	// Usar función eliminarUsuario para mayor claridad
+	if (eliminarUsuario(usuarios, id)) {
+		cout << "Usuario eliminado de la lista en memoria.\n";
+	} else {
+		cout << "Error al eliminar usuario.\n";
+	}
 }
 
 void ejecutarAplicacion() {
