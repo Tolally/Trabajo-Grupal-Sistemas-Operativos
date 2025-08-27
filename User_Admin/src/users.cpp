@@ -1,9 +1,51 @@
 #include "users.h"
+#include <fstream>
+#include <sstream>
+#include <iostream>
 
+vector<Usuario> cargarUsuarios(const string& rutaArchivo){
+    vector<Usuario> usuarios;
+    ifstream archivo(rutaArchivo);
 
-vector<Usuario> cargarUsuarios(string& rutaArchivo);
+    string linea;
+    while (getline(archivo, linea)) {
+        if (linea.empty()) continue;
 
-void guardarUsuarios(vector<Usuario>& usuarios, string& rutaArchivo);
+        stringstream ss(linea);
+        Usuario u;
+        string idStr;
+
+        getline(ss, idStr, ';');
+        getline(ss, u.nombre, ';');
+        getline(ss, u.username, ';');
+        getline(ss, u.password, ';');
+        getline(ss, u.perfil, ';');
+
+        try {
+            u.id = stoi(idStr);
+            usuarios.push_back(u);
+        } catch (...) {
+            cerr << "Error al convertir ID en línea: " << linea << "\n";
+        }
+    }
+
+    archivo.close();
+    return usuarios;
+}
+
+void guardarUsuarios(const vector<Usuario>& usuarios, const string& rutaArchivo){
+    ofstream archivo(rutaArchivo, ios::trunc);
+    for (const auto& u : usuarios) {
+        archivo << u.id << ";"
+                << u.nombre << ";"
+                << u.username << ";"
+                << u.password << ";"
+                << u.perfil << "\n";
+    }
+
+    archivo.close();
+}
+
 
 void agregarUsuario(vector<Usuario>& usuarios, int id, string nombre, string username, string password, string perfil) {
     Usuario nuevoUsuario;
