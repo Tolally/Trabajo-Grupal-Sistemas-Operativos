@@ -34,7 +34,9 @@ vector<Usuario> cargarUsuarios(const string& rutaArchivo){
 }
 
 void guardarUsuarios(const vector<Usuario>& usuarios, const string& rutaArchivo){
+
     ofstream archivo(rutaArchivo, ios::trunc);
+
     for (const auto& u : usuarios) {
         archivo << u.id << ";"
                 << u.nombre << ";"
@@ -48,13 +50,15 @@ void guardarUsuarios(const vector<Usuario>& usuarios, const string& rutaArchivo)
 
 
 void agregarUsuario(vector<Usuario>& usuarios, int id, string nombre, string username, string password, string perfil) {
-    Usuario nuevoUsuario;
+    Usuario nuevoUsuario; // Crea nuevoUsuario
+    // Asigna valores a nuevoUsuario
     nuevoUsuario.id = id;
     nuevoUsuario.nombre = nombre;
     nuevoUsuario.username = username;
     nuevoUsuario.password = password;
     nuevoUsuario.perfil = perfil;
-    usuarios.push_back(nuevoUsuario);
+
+    usuarios.push_back(nuevoUsuario); // Agrega nuevoUsuario a la lista de usuarios
 }
 
 bool eliminarUsuario(vector<Usuario>& usuarios, int id) {

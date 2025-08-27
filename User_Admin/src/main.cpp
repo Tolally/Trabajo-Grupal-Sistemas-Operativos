@@ -1,19 +1,19 @@
 #include <iostream>
+#include <cstdlib>
 #include "interface.h"
 #include "users.h"
 
 using namespace std;
 
-int main(int argc, char **argv) {
-	
-	/*
-	vector<Usuario> usuarios = {
-    {1, "Juan Perez", "jperez", "1234", "ADMIN"},
-    {2, "Ana Gomez", "agomez", "abcd", "GENERAL"},
-    {3, "Luis Torres", "ltorres", "pass", "GENERAL"}
-	};
-	*/
-	string rutaArchivo = "data/USUARIOS.txt";
+int main() {
+
+	const char* envRuta = getenv("USER_FILE");
+	if (!envRuta) {
+    	cerr << "No se encontró la variable USER_FILE en el entorno.\n";
+    return 1;
+	}
+	string rutaArchivo = envRuta;
+	cout << "Ruta archivo: " << rutaArchivo << endl;
 	vector<Usuario> usuarios = cargarUsuarios(rutaArchivo);
 
 	while (true) {

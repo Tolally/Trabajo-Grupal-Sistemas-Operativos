@@ -24,5 +24,5 @@ $(BIN_DIR):
 clean:
 	rm -rf $(BIN_DIR)
 
-run: all
-	./$(TARGET)
+run: $(TARGET)
+	set -a; . ../.env; set +a; ./bin/app
