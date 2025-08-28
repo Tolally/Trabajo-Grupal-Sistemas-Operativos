@@ -23,10 +23,6 @@ Esto genera un ejecutable en `User_Admin/bin/app`.
 
 ### 2. Para ejecutar el programa:
 ```
-./bin/app
-```
-o altenativamente se puede usar:
-```
 make run
 ```
 

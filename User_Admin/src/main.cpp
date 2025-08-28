@@ -5,6 +5,7 @@
 
 using namespace std;
 
+// Inicio de la aplicación. Carga los usuarios desde el archivo USUARIOS.txt que se ubica en la ruta definida por USER_FILE (ver el archivo .env) y maneja el ciclo del menú.
 int main() {
 
 	const char* envRuta = getenv("USER_FILE");
@@ -16,6 +17,7 @@ int main() {
 	cout << "Ruta archivo: " << rutaArchivo << endl;
 	vector<Usuario> usuarios = cargarUsuarios(rutaArchivo);
 
+	// Bucle principal del menú hasta que el usuario decida salir.
 	while (true) {
 		int opcion = mostrarMenuPrincipal();
 		switch (opcion) {

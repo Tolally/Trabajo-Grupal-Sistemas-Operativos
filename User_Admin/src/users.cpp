@@ -3,6 +3,7 @@
 #include <sstream>
 #include <iostream>
 
+// Carga todos los usuarios desde el archivo indicado, con el id, nombre, usuario, contraseña y tipo de perfil separados por punto y coma.
 vector<Usuario> cargarUsuarios(const string& rutaArchivo){
     vector<Usuario> usuarios;
     ifstream archivo(rutaArchivo);
@@ -33,6 +34,7 @@ vector<Usuario> cargarUsuarios(const string& rutaArchivo){
     return usuarios;
 }
 
+// Guarda todos los usuarios en el archivo txt. Cada usuario con sus detalles se escriben en una línea usando punto y coma como separador.
 void guardarUsuarios(const vector<Usuario>& usuarios, const string& rutaArchivo){
 
     ofstream archivo(rutaArchivo, ios::trunc);
@@ -48,7 +50,7 @@ void guardarUsuarios(const vector<Usuario>& usuarios, const string& rutaArchivo)
     archivo.close();
 }
 
-
+// Crea un nuevo usuario y lo agrega al vector.
 void agregarUsuario(vector<Usuario>& usuarios, int id, string nombre, string username, string password, string perfil) {
     Usuario nuevoUsuario; // Crea nuevoUsuario
     // Asigna valores a nuevoUsuario
@@ -61,6 +63,7 @@ void agregarUsuario(vector<Usuario>& usuarios, int id, string nombre, string use
     usuarios.push_back(nuevoUsuario); // Agrega nuevoUsuario a la lista de usuarios
 }
 
+// Elimina de la lista el usuario cuyo id coincida.
 bool eliminarUsuario(vector<Usuario>& usuarios, int id) {
     // Buscar el usuario por id
     for (size_t i = 0; i < usuarios.size(); ++i) {

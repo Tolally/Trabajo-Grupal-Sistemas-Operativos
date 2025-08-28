@@ -7,6 +7,7 @@
 using namespace std;
 
 namespace {
+	// Lee un entero asegurándose que la entrada sea correcta y continúa pidiendo un valor de entrada hasta recibir un número válido
 	int leerEnteroSeguro() {
 		int v; while (true) {
 			if (cin >> v) { cin.ignore(numeric_limits<streamsize>::max(), '\n'); return v; }
@@ -14,11 +15,6 @@ namespace {
 			cin.ignore(numeric_limits<streamsize>::max(), '\n');
 			cout << "Entrada inválida. Intente nuevamente: ";
 		}
-	}
-
-	string leerLinea(const string& etiqueta) {
-		cout << etiqueta;
-		string s; getline(cin, s); return s;
 	}
 }
 
@@ -36,6 +32,7 @@ int mostrarMenuPrincipal() {
 	return op;
 }
 
+// Sección para ingresar un nuevo usuario. Asigna un id, pide los datos y valida el perfil. Si el usuario confirma lo agrega al vector.
 void pantallaIngresarUsuario(vector<Usuario>& usuarios) {
 	cout << "\n=== Ingreso de usuarios ===\n";
 	int id = usuarios.empty() ? 1 : (usuarios.back().id + 1);
@@ -65,6 +62,7 @@ void pantallaIngresarUsuario(vector<Usuario>& usuarios) {
 	}
 }
 
+// Muestra una lista de los usuarios. Si no hay usuarios avisa con un mensaje.
 void pantallaListarUsuarios(const vector<Usuario>& usuarios) {
 	cout << "\n=== Lista de usuarios ===\n";
 	cout << "Id   Nombre                 Perfil\n";
@@ -84,6 +82,7 @@ void pantallaListarUsuarios(const vector<Usuario>& usuarios) {
 	(void)leerEnteroSeguro();
 }
 
+// Permite eliminar un usuario por id con confirmación y muestra una advertencia si se intenta borrar un usuario con perfil ADMIN.
 void pantallaEliminarUsuario(vector<Usuario>& usuarios) {
 	cout << "\n=== Eliminar Usuarios ===\n";
 	if (usuarios.empty()) {
@@ -115,7 +114,7 @@ void pantallaEliminarUsuario(vector<Usuario>& usuarios) {
 }
 
 void ejecutarAplicacion() {
-	vector<Usuario> usuarios; // almacenamiento temporal en memoria
+	vector<Usuario> usuarios;
 	while (true) {
 		int opcion = mostrarMenuPrincipal();
 		switch (opcion) {
@@ -137,4 +136,3 @@ void ejecutarAplicacion() {
 		}
 	}
 }
-
