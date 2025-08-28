@@ -1,4 +1,4 @@
-# Entregable 1 - Sistemas Operativos
+# Entregable 1 - Sistemas Operativos - Grupo 4
 
 ## Integrantes
 - Erick López
