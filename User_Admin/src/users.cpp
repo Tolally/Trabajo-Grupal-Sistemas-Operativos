@@ -8,10 +8,15 @@ vector<Usuario> cargarUsuarios(const string& rutaArchivo) {
     vector<Usuario> usuarios;
     ifstream archivo(rutaArchivo);
 
+    // Si el archivo no existe, lo creamos vacío
+    {
+        ofstream creador(rutaArchivo, ios::app);
+    }
+    
     string linea;
     while (getline(archivo, linea)) {
         if (linea.empty()) continue;
-        
+
         stringstream ss(linea);
         Usuario u;
         string idStr;
