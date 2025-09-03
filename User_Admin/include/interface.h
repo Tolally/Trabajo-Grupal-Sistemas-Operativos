@@ -17,3 +17,5 @@ void pantallaListarUsuarios(const vector<Usuario>& usuarios);
 void pantallaEliminarUsuario(vector<Usuario>& usuarios);
 
 void ejecutarAplicacion();
+
+void limpiarConsola();
