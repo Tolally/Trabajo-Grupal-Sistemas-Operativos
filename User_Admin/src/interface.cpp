@@ -50,15 +50,19 @@ void pantallaIngresarUsuario(vector<Usuario>& usuarios) {
 		while (!perfil.empty() && isspace(static_cast<unsigned char>(perfil.back()))) perfil.pop_back();
 		for (auto &c : perfil) c = toupper(static_cast<unsigned char>(c));
 		if (perfil == "ADMIN" || perfil == "GENERAL") break;
-		cout << "Tipo de perfil inválido. Debe ser ADMIN o GENERAL. Intente nuevamente.\n";
+	    limpiarConsola();
+		cout << "Tipo de perfil inválido. Debe ser ADMIN o GENERAL. Intente nuevamente.\n \n";
 	}
 	cout << "\n1) Guardar     2) Cancelar\nOpción : ";
 	int op = leerEnteroSeguro();
+
+	//Lo agrego aqui para que se alcance a ver la confirmacion
+	limpiarConsola();
 	if (op == 1) {
 		agregarUsuario(usuarios, id, nombre, username, password, perfil);
-		cout << "Usuario agregado en memoria.\n";
+		cout << "Usuario agregado en memoria.\n \n";
 	} else {
-		cout << "Operación cancelada.\n";
+		cout << "Operación cancelada.\n \n";
 	}
 }
 
@@ -80,6 +84,7 @@ void pantallaListarUsuarios(const vector<Usuario>& usuarios) {
 	}
 	cout << "\n1) Para Volver : ";
 	(void)leerEnteroSeguro();
+	limpiarConsola();
 }
 
 // Permite eliminar un usuario por id con confirmación y muestra una advertencia si se intenta borrar un usuario con perfil ADMIN.
@@ -104,14 +109,26 @@ void pantallaEliminarUsuario(vector<Usuario>& usuarios) {
 	}
 	cout << "\n1) Guardar     2) Cancelar\nOpcion : ";
 	int op = leerEnteroSeguro();
+
+	limpiarConsola();
 	if (op != 1) { cout << "Operación cancelada.\n"; return; }
 	// Usar función eliminarUsuario para mayor claridad
 	if (eliminarUsuario(usuarios, id)) {
-		cout << "Usuario eliminado de la lista en memoria.\n";
+		cout << "Usuario eliminado de la lista en memoria.\n \n";
 	} else {
 		cout << "Error al eliminar usuario.\n";
 	}
 }
+
+void limpiarConsola(){
+	#ifdef _WIN32
+		system("cls");
+	#else
+		system("clear");
+	#endif
+}
+
+
 
 void ejecutarAplicacion() {
 	vector<Usuario> usuarios;

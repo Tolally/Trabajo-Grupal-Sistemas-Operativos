@@ -23,17 +23,21 @@ int main() {
 			case 0:
 				cout << "Saliendo...\n";
 				guardarUsuarios(usuarios, rutaArchivo);
+				
 				return 0;
 			case 1:
 				pantallaIngresarUsuario(usuarios);
 				guardarUsuarios(usuarios, rutaArchivo);
+				
 				break;
 			case 2:
 				pantallaListarUsuarios(usuarios);
+				
 				break;
 			case 3:
 				pantallaEliminarUsuario(usuarios);
 				guardarUsuarios(usuarios, rutaArchivo);
+				
 				break;
 			default:
 				cout << "Opción inválida. Intente nuevamente.\n";
