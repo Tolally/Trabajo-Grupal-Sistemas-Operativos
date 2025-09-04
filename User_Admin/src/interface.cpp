@@ -1,10 +1,5 @@
-#include <iostream>
-#include <limits>
-#include <algorithm>
-#include "interface.h"
-#include "users.h"
-
-using namespace std;
+#include "../include/interface.h"
+#include "../include/users.h"
 
 namespace {
 	// Lee un entero asegurándose que la entrada sea correcta y continúa pidiendo un valor de entrada hasta recibir un número válido
@@ -20,9 +15,9 @@ namespace {
 
 // Interfaz de usuario
 int mostrarMenuPrincipal() {
-	cout << "==============================\n";
+	cout << "==================================\n";
 	cout << "   Módulo - Gestión de Usuarios\n";
-	cout << "==============================\n";
+	cout << "==================================\n";
 	cout << "0) Salir\n";
 	cout << "1) Ingresar Usuarios\n";
 	cout << "2) Listar Usuarios\n";

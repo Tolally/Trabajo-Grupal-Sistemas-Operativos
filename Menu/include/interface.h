@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 #include <string>
 #include <unordered_set>
 #include <unordered_map>
@@ -19,3 +20,10 @@ void pantallaFuncionCuadratica();
 
 // Muestra la interfaz de conteo de texto. Si rutaArchivo no es vacío, intenta usarlo como fuente.
 void pantallaConteoTexto(const string& rutaArchivo);
+=======
+#include <iostream>
+
+using namespace std;
+
+int mostrarMenuPrincipal();
+>>>>>>> 0928bcb654ac2f7e47a66561ee47e4cdb9ad79be

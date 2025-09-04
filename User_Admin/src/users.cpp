@@ -1,7 +1,4 @@
-#include "users.h"
-#include <fstream>
-#include <sstream>
-#include <iostream>
+#include "../include/users.h"
 
 // Carga todos los usuarios desde el archivo indicado, con el id, nombre, usuario, contraseña y tipo de perfil separados por punto y coma.
 vector<Usuario> cargarUsuarios(const string& rutaArchivo) {
