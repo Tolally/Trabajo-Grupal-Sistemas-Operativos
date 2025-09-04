@@ -1,7 +1,7 @@
 #include <iostream>
 #include <cstdlib>
-#include "interface.h"
-#include "users.h"
+#include "../include/interface.h"
+#include "../include/users.h"
 
 using namespace std;
 
