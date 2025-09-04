@@ -7,7 +7,6 @@ using namespace std;
 
 // Inicio de la aplicación. Carga los usuarios desde el archivo USUARIOS.txt que se ubica en la ruta definida por USER_FILE (ver el archivo .env) y maneja el ciclo del menú.
 int main() {
-
 	const char* envRuta = getenv("USER_FILE");
 	if (!envRuta) {
     	cerr << "No se encontró la variable USER_FILE en el entorno.\n";

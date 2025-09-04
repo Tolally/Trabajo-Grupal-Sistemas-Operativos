@@ -20,9 +20,9 @@ namespace {
 
 // Interfaz de usuario
 int mostrarMenuPrincipal() {
-	cout << "==============================\n";
+	cout << "==================================\n";
 	cout << "   Módulo - Gestión de Usuarios\n";
-	cout << "==============================\n";
+	cout << "==================================\n";
 	cout << "0) Salir\n";
 	cout << "1) Ingresar Usuarios\n";
 	cout << "2) Listar Usuarios\n";
