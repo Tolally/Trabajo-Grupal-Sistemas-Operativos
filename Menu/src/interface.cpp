@@ -1,11 +1,6 @@
-#include "interface.h"
-#include "funciones.h"
-
-#include <iostream>
-#include <limits>
-#include <string>
-
-using namespace std;
+#include "../include/interface.h"
+#include "../include/texto.h"
+#include "../include/matematicas.h"
 
 namespace {
     // Lee un entero de forma segura desde stdin con validación básica.
@@ -67,7 +62,11 @@ void pantallaFuncionCuadratica() {
     cout << "=== f(x) = x^2 + 2x + 8 ===\n";
     cout << "Indique X (número real): ";
     double x;
-    while (!(cin >> x)) { cin.clear(); cin.ignore(numeric_limits<streamsize>::max(), '\n'); cout << "Entrada inválida, intente nuevamente: "; }
+    while (!(cin >> x)) { 
+        cin.clear(); 
+        cin.ignore(numeric_limits<streamsize>::max(), '\n'); 
+        cout << "Entrada inválida, intente nuevamente: "; 
+    }
     cin.ignore(numeric_limits<streamsize>::max(), '\n');
     double y = calcularFx(x);
     cout.setf(ios::fixed); cout.precision(4);
@@ -105,4 +104,12 @@ void pantallaConteoTexto(const string& rutaArchivo) {
     cout << "- palabras: " << c.palabras << "\n";
     cout << "\n(Enter para volver)";
     cin.get();
+}
+
+void limpiarConsola(){
+	#ifdef _WIN32
+		system("cls");
+	#else
+		system("clear");
+	#endif
 }

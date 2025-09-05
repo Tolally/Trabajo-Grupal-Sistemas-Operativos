@@ -1,0 +1,25 @@
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <vector>
+#include <string>
+#include <stdexcept>
+#include <iomanip>
+
+using namespace std;
+
+// Calcula f(x) = x*x + 2x + 8 y devuelve el resultado en double.
+double calcularFx(double x);
+
+// Lee una matriz desde archivo con separador 'sep' (string). Valida formato rectangular.
+static bool leerMatriz(const string& ruta, const string& sep, vector<vector<double>>& M, string& err);
+
+// Multiplica A (n x n) por B (n x n) y deja resultado en C.
+static bool multiplicarNxN(
+    const vector<vector<double>>& A, 
+    const vector<vector<double>>& B, 
+    vector<vector<double>>& C, 
+    string& err);
+
+// Imprime matriz con separador sep.
+static void imprimirMatriz(const vector<vector<double>>& M, const string& sep);

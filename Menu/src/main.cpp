@@ -1,13 +1,9 @@
-#include "interface.h"
-#include "funciones.h"
+#include "../include/interface.h"
+#include "../include/matematicas.h"
+#include "../include/validacion.h"
 
 #include <iostream>
 #include <cstdlib>
-#include <stdexcept>
-#include <unordered_map>
-#include <unordered_set>
-#include <fstream>
-#include <sstream>
 #include <sys/stat.h>
 
 using namespace std;
@@ -97,8 +93,17 @@ int main(int argc, char** argv) {
             cerr << "No hay usuarios disponibles. Verifique la ruta: " << rutaUsuarios << "\n";
             return 1;
         }
-        UsuarioMP actual;
-        if (!autenticarUsuario(usuarios, args.usuario, args.password, actual)) {
+        Usuario actual;
+        // Convertir vector<Usuario> a vector<UsuarioMP>
+        std::vector<Usuario> usuariosMP;
+        for (const auto& u : usuarios) {
+            Usuario ump;
+            ump.username = u.username;
+            ump.password = u.password;
+            ump.perfil = u.perfil;
+            usuariosMP.push_back(ump);
+        }
+        if (!autenticarUsuario(usuariosMP, args.usuario, args.password, actual)) {
             cerr << "Usuario/Password inválidos.\n";
             return 1;
         }

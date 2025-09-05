@@ -1,12 +1,9 @@
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <vector>
-#include <string>
-#include <stdexcept>
-#include <iomanip>
+#include "../include/matematicas.h"
 
-using namespace std;
+// Calcula f(x) = x*x + 2x + 8 y devuelve el resultado en double.
+double calcularFx(double x) {
+    return x * x + 2.0 * x + 8.0;
+}
 
 // Lee una matriz desde archivo con separador 'sep' (string). Valida formato rectangular.
 static bool leerMatriz(const string& ruta, const string& sep, vector<vector<double>>& M, string& err) {
@@ -92,4 +89,3 @@ int main(int argc, char** argv) {
     imprimirMatriz(C, sep);
     return 0;
 }
-
