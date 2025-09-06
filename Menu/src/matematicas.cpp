@@ -6,7 +6,7 @@ double calcularFx(double x) {
 }
 
 // Lee una matriz desde archivo con separador 'sep' (string). Valida formato rectangular.
-static bool leerMatriz(const string& ruta, const string& sep, vector<vector<double>>& M, string& err) {
+bool leerMatriz(const string& ruta, const string& sep, vector<vector<double>>& M, string& err) {
     ifstream f(ruta);
     if (!f.is_open()) { err = "No se pudo abrir archivo: " + ruta; return false; }
     string linea; size_t cols = 0; size_t fila = 0;
@@ -39,7 +39,7 @@ static bool leerMatriz(const string& ruta, const string& sep, vector<vector<doub
 }
 
 // Multiplica A (n x n) por B (n x n) y deja resultado en C.
-static bool multiplicarNxN(const vector<vector<double>>& A, const vector<vector<double>>& B, vector<vector<double>>& C, string& err) {
+bool multiplicarNxN(const vector<vector<double>>& A, const vector<vector<double>>& B, vector<vector<double>>& C, string& err) {
     size_t n = A.size();
     if (n == 0) { err = "A vacía"; return false; }
     if (A.size() != A[0].size()) { err = "A no es NxN"; return false; }
@@ -59,7 +59,7 @@ static bool multiplicarNxN(const vector<vector<double>>& A, const vector<vector<
 }
 
 // Imprime matriz con separador sep.
-static void imprimirMatriz(const vector<vector<double>>& M, const string& sep) {
+void imprimirMatriz(const vector<vector<double>>& M, const string& sep) {
     cout.setf(ios::fixed); cout.precision(6);
     for (size_t i = 0; i < M.size(); ++i) {
         for (size_t j = 0; j < M[i].size(); ++j) {
@@ -68,24 +68,4 @@ static void imprimirMatriz(const vector<vector<double>>& M, const string& sep) {
         }
         cout << "\n";
     }
-}
-
-// Punto de entrada del multiplicador de matrices.
-int main(int argc, char** argv) {
-    if (argc != 4) {
-        cerr << "Uso: multi <rutaA> <rutaB> <sep>\n";
-        return 1;
-    }
-    string rutaA = argv[1];
-    string rutaB = argv[2];
-    string sep = argv[3];
-    if (sep.empty()) sep = ",";
-
-    vector<vector<double>> A, B, C;
-    string err;
-    if (!leerMatriz(rutaA, sep, A, err)) { cerr << err << "\n"; return 1; }
-    if (!leerMatriz(rutaB, sep, B, err)) { cerr << err << "\n"; return 1; }
-    if (!multiplicarNxN(A, B, C, err)) { cerr << err << "\n"; return 1; }
-    imprimirMatriz(C, sep);
-    return 0;
 }

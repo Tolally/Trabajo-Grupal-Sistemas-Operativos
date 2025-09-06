@@ -91,7 +91,6 @@ ConteoTexto contarTexto(const string& texto) {
     return c;
 }
 
-// Lee archivo de texto completo a un string. Devuelve true/false según éxito y deja contenido en out.
 bool leerArchivoTexto(const string& ruta, string& outContenido, string& outError) {
     if (ruta.empty()) { outError = "Ruta vacía"; return false; }
     ifstream f(ruta);
@@ -99,13 +98,4 @@ bool leerArchivoTexto(const string& ruta, string& outContenido, string& outError
     stringstream ss; ss << f.rdbuf();
     outContenido = ss.str();
     return true;
-}
-
-// Limpia la consola usando el comando del sistema según plataforma.
-void limpiarConsola() {
-#ifdef _WIN32
-    system("cls");
-#else
-    system("clear");
-#endif
 }

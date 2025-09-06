@@ -12,14 +12,14 @@ using namespace std;
 double calcularFx(double x);
 
 // Lee una matriz desde archivo con separador 'sep' (string). Valida formato rectangular.
-static bool leerMatriz(const string& ruta, const string& sep, vector<vector<double>>& M, string& err);
+bool leerMatriz(const string& ruta, const string& sep, vector<vector<double>>& M, string& err);
 
 // Multiplica A (n x n) por B (n x n) y deja resultado en C.
-static bool multiplicarNxN(
-    const vector<vector<double>>& A, 
-    const vector<vector<double>>& B, 
-    vector<vector<double>>& C, 
+bool multiplicarNxN(
+    const vector<vector<double>>& A,
+    const vector<vector<double>>& B,
+    vector<vector<double>>& C,
     string& err);
 
 // Imprime matriz con separador sep.
-static void imprimirMatriz(const vector<vector<double>>& M, const string& sep);
+void imprimirMatriz(const vector<vector<double>>& M, const string& sep);

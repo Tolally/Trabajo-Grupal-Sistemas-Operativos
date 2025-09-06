@@ -1,5 +1,8 @@
 #include "../include/validacion.h"
 
+// Declaración anticipada
+static string upperCopy(string s);
+
 // Parsea los argumentos -u (usuario), -p (password) y -f (file). Lanza std::runtime_error si faltan -u o -p.
 Argumentos parsearArgumentos(int argc, char** argv) {
     Argumentos args;

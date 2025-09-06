@@ -1,11 +1,83 @@
-# Entregable 1 - Sistemas Operativos - Grupo 4
-
-## Integrantes
+# Integrantes
 - Erick López
 - Eduardo Montecinos
 - Matias Toledo
 - Carlos Duarte
 
+# Entregable 2 - Sistemas Operativos - Grupo 4
+## Propósito de la aplicación
+MENÚ PRINCIPAL con autenticación por argumentos y control de permisos por perfil.
+
+Este programa se inicia con argumentos de ejecución para autenticar un usuario y, según su perfil, habilitar o restringir el uso de opciones del menú. Los usuarios se obtienen del archivo `USUARIOS.txt` archivo de usuarios y los permisos de acceso se leen desde el archivo de perfiles `PERFILES.txt`.
+
+Opciones del menú:
+
+0) Salir
+1) Admin usuarios y perfiles (en construcción) - Solo lo pueden usar usuarios de tipo ADMIN
+2) Multiplica matrices NxN (en construcción) - Esto se puede usar con el segundo programa llamado `multi`
+3) Juego (en construcción)
+4) ¿Es palíndromo? - Interfaz para ingresar texto y luego validar o cancelar
+5) Calcula f(x) = x^2 + 2x + 8 - Permite ingresar el valor de 'x', y luego muestra el resultado
+6) Conteo sobre texto - Muestra cantidad de vocales, consonantes, caracteres especiales y palabras de un texto
+
+## Compilar y ejecutar el programa
+Este entregable tiene dos ejecutables: `pgm` (menú principal) y `multi` (multiplicación de matrices).
+
+### 1) Compilar desde la carpeta `Menu/` usando el Makefile:
+```
+cd Menu
+make
+```
+Esto generará:
+- `Menu/bin/pgm`
+- `Menu/bin/multi`
+
+### 2) Ejecutar el MENÚ PRINCIPAL (`pgm`) con usuario, contraseña y ruta al archivo de texto:
+```
+cd bin
+/pgm -u <usuario> -p <contraseña> -f <ruta/archivo.txt>
+```
+
+Ejemplo:
+```
+cd bin
+./pgm -u Tolally -p 12345 -f "../libros/010 - Alice's Adventures in Wonderland by Lewis Carroll (48778) (pg11).txt"
+```
+
+Salida:
+```
+==============================
+       MENÚ PRINCIPAL
+==============================
+User: Tolally (ADMIN)
+
+0) Salir
+1) Admin Users (En construcción)
+2) Multi Matrices NxN
+3) Juego
+4) ¿Es palíndromo?
+5) Calcula f(x) = x^2 + 2x + 8
+6) Conteo sobre texto
+Opción : 
+```
+
+### 3) Ejecutar el programa de MATRICES `multi` (multiplica matrices NxN):
+```
+./multi "/ruta/a/A.TXT" "/ruta/a/B.TXT" ","
+```
+Consideraciones para `multi`:
+- Lee ambas matrices desde archivos txt con un separador configurable (tercer argumento).
+- Además valida que el contenido de las matrices sean números y que la matriz sea de la forma NxN.
+
+## Variables de entorno
+Crear un archivo `.env` con lo siguiente:
+```
+USER_FILE=../data/USUARIOS.txt
+PERFILES_FILE=../data/PERFILES.TXT
+```
+
+
+# Entregable 1 - Sistemas Operativos - Grupo 4
 ## Propósito de la aplicación
 Esta aplicación es una herramienta que permite la administración de usuarios. Para ello realiza las siguientes funciones:
 1. Ingresar usuarios nuevos.

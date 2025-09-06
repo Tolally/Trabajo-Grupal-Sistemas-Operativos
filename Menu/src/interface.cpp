@@ -108,8 +108,8 @@ void pantallaConteoTexto(const string& rutaArchivo) {
 
 void limpiarConsola(){
 	#ifdef _WIN32
-		system("cls");
+		(void)system("cls");
 	#else
-		system("clear");
+		(void)system("clear");
 	#endif
 }

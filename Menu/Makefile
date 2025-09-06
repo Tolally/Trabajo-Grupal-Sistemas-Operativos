@@ -6,11 +6,18 @@ INC := -Iinclude
 BIN_DIR := bin
 SRC_DIR := src
 
-PGM_SRCS := $(SRC_DIR)/main.cpp $(SRC_DIR)/interface.cpp $(SRC_DIR)/funciones.cpp
+PGM_SRCS := \
+    $(SRC_DIR)/main.cpp \
+    $(SRC_DIR)/interface.cpp \
+    $(SRC_DIR)/validacion.cpp \
+    $(SRC_DIR)/texto.cpp \
+    $(SRC_DIR)/matematicas.cpp
 PGM_OBJS := $(PGM_SRCS:$(SRC_DIR)/%.cpp=$(BIN_DIR)/%.o)
 
-MULTI_SRCS := $(SRC_DIR)/multi.cpp $(SRC_DIR)/funciones.cpp
-MULTI_OBJS := $(BIN_DIR)/multi.o $(BIN_DIR)/funciones.o
+MULTI_SRCS := \
+    $(SRC_DIR)/multi.cpp \
+    $(SRC_DIR)/matematicas.cpp
+MULTI_OBJS := $(MULTI_SRCS:$(SRC_DIR)/%.cpp=$(BIN_DIR)/%.o)
 
 PGM_BIN := $(BIN_DIR)/pgm
 MULTI_BIN := $(BIN_DIR)/multi
