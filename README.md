@@ -65,6 +65,11 @@ Opción :
 ```
 ./multi "/ruta/a/A.TXT" "/ruta/a/B.TXT" ","
 ```
+Ejemplo
+```
+cd bin
+./multi ../data/A.txt ../data/B.txt ","
+```
 Consideraciones para `multi`:
 - Lee ambas matrices desde archivos txt con un separador configurable (tercer argumento).
 - Además valida que el contenido de las matrices sean números y que la matriz sea de la forma NxN.
