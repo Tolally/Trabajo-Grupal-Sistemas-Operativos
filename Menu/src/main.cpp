@@ -71,6 +71,7 @@ static string resolverRuta(const string& path) {
 
 // Muestra un mensaje de autorización denegada y espera Enter.
 static void noAutorizado() {
+    limpiarConsola();
     cout << "Perfil no autorizado para esta opción.\n";
     cout << "\n(Enter para volver)";
     cin.get();
@@ -84,8 +85,8 @@ int main(int argc, char** argv) {
         Argumentos args = parsearArgumentos(argc, argv);
 
         // Rutas de archivos desde variables de entorno o valores por defecto
-        string rutaUsuarios = resolverRuta(getEnvOr("USER_FILE", "Menu/data/USUARIOS.txt"));
-        string rutaPerfiles = resolverRuta(getEnvOr("PERFILES_FILE", "Menu/data/PERFILES.TXT"));
+        string rutaUsuarios = resolverRuta(getEnvOr("USER_FILE", "data/USUARIOS.txt"));
+        string rutaPerfiles = resolverRuta(getEnvOr("PERFILES_FILE", "data/PERFILES.TXT"));
 
         // Cargar usuarios y autenticar
         auto usuarios = cargarUsuarios(rutaUsuarios);
@@ -152,6 +153,7 @@ int main(int argc, char** argv) {
                     pantallaConteoTexto(args.archivo);
                     break;
                 default:
+                    limpiarConsola();
                     cout << "Opción inválida. Intente nuevamente.\n";
                     break;
             }
