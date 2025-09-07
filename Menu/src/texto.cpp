@@ -82,7 +82,10 @@ ConteoTexto contarTexto(const string& texto) {
             if (esVocalChar(ch)) c.vocales++; else c.consonantes++;
             if (!enPalabra) { c.palabras++; enPalabra = true; }
         } else if (isdigit(ch) || isspace(ch)) {
-            if (isspace(ch)) enPalabra = false;
+            if (isspace(ch)) {
+                if (ch == ' ') c.especiales++;
+                enPalabra = false;
+            }
         } else {
             c.especiales++;
             enPalabra = false;
