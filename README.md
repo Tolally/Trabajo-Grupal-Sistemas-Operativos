@@ -34,14 +34,12 @@ Esto generará:
 
 ### 2) Ejecutar el MENÚ PRINCIPAL (`pgm`) con usuario, contraseña y ruta al archivo de texto:
 ```
-cd bin
-/pgm -u <usuario> -p <contraseña> -f <ruta/archivo.txt>
+./bin/pgm -u <usuario> -p <contraseña> -f <ruta/archivo.txt>
 ```
 
 Ejemplo:
 ```
-cd bin
-./pgm -u Tolally -p 12345 -f "libros/010 - Alice's Adventures in Wonderland by Lewis Carroll (48778) (pg11).txt"
+./bin/pgm -u Tolally -p 12345 -f "libros/010 - Alice's Adventures in Wonderland by Lewis Carroll (48778) (pg11).txt"
 ```
 
 Salida:
@@ -67,8 +65,7 @@ Opción :
 ```
 Ejemplo
 ```
-cd bin
-./multi ../data/A.txt ../data/B.txt ","
+./bin/multi ../data/A.txt ../data/B.txt ","
 ```
 Consideraciones para `multi`:
 - Lee ambas matrices desde archivos txt con un separador configurable (tercer argumento).
