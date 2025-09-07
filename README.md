@@ -41,7 +41,7 @@ cd bin
 Ejemplo:
 ```
 cd bin
-./pgm -u Tolally -p 12345 -f "../libros/010 - Alice's Adventures in Wonderland by Lewis Carroll (48778) (pg11).txt"
+./pgm -u Tolally -p 12345 -f "libros/010 - Alice's Adventures in Wonderland by Lewis Carroll (48778) (pg11).txt"
 ```
 
 Salida:
