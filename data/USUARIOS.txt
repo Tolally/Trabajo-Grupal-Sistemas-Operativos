@@ -1,3 +1,4 @@
 1;Matias;Tolally;12345;ADMIN
 4;maria;mariaa;1234;ADMIN
 5;Nicolas;nico;12345;GENERAL
+6;jared;jared;procesos;ADMIN
