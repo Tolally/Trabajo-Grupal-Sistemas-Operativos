@@ -2,6 +2,7 @@
 #include "../include/matematicas.h"
 #include "../include/validacion.h"
 
+#include <unistd.h>
 #include <iostream>
 #include <cstdlib>
 #include <sys/stat.h>
@@ -87,6 +88,7 @@ int main(int argc, char** argv) {
         // Rutas de archivos desde variables de entorno o valores por defecto
         string rutaUsuarios = resolverRuta(getEnvOr("USER_FILE", "data/USUARIOS.txt"));
         string rutaPerfiles = resolverRuta(getEnvOr("PERFILES_FILE", "data/PERFILES.TXT"));
+        string rutaAdmin = resolverRuta(getEnvOr("ADMIN_SYS", ""));
 
         // Cargar usuarios y autenticar
         auto usuarios = cargarUsuarios(rutaUsuarios);
@@ -118,6 +120,8 @@ int main(int argc, char** argv) {
 
         // Bucle del menú
         while (true) {
+            cout << "==============================\n";
+            cout << " PID del proceso actual: " << getpid() << endl;
             int opcion = mostrarMenuPrincipal(actual.username, actual.perfil);
             switch (opcion) {
                 case 0:
@@ -126,16 +130,12 @@ int main(int argc, char** argv) {
                 case 1:
                     if (!opcionPermitida(permisos, actual.perfil, 1)) { noAutorizado(); break; }
                     limpiarConsola();
-                    cout << "Admin de usuarios y perfiles (en construcción)\n";
-                    cout << "\n(Enter para volver)";
-                    cin.get();
+                    system(rutaAdmin.c_str());
+                    limpiarConsola();
                     break;
                 case 2:
                     limpiarConsola();
-                    cout << "Multiplica matrices NxN (en construcción en este menú).\n";
-                    cout << "Use el ejecutable 'multi' para multiplicar matrices.\n";
-                    cout << "\n(Enter para volver)";
-                    cin.get();
+                    multiplicarMatrices();
                     break;
                 case 3:
                     limpiarConsola();
@@ -152,6 +152,11 @@ int main(int argc, char** argv) {
                 case 6:
                     pantallaConteoTexto(args.archivo);
                     break;
+                case 7: {
+                    limpiarConsola();
+                    pantallaCrearIndiceInvertido();
+                    break;
+                }
                 default:
                     limpiarConsola();
                     cout << "Opción inválida. Intente nuevamente.\n";

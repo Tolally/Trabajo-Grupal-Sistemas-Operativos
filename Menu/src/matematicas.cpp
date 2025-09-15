@@ -38,6 +38,27 @@ bool leerMatriz(const string& ruta, const string& sep, vector<vector<double>>& M
     return true;
 }
 
+// Verifica que la matriz sea de orden NxN
+bool esMatrizDeNxN(const string& ruta, int N, const string& sep) {
+    vector<vector<double>> M;
+    string err;
+    if (!leerMatriz(ruta, sep, M, err)) {
+        cout << "Error al leer la matriz: " << err << endl;
+        return false;
+    }
+    if (M.size() != N) {
+        cout << "La matriz no tiene " << N << " filas.\n";
+        return false;
+    }
+    for (const auto& fila : M) {
+        if (fila.size() != N) {
+            cout << "La matriz no es cuadrada de " << N << "x" << N << ".\n";
+            return false;
+        }
+    }
+    return true;
+}
+
 // Multiplica A (n x n) por B (n x n) y deja resultado en C.
 bool multiplicarNxN(const vector<vector<double>>& A, const vector<vector<double>>& B, vector<vector<double>>& C, string& err) {
     size_t n = A.size();
@@ -60,7 +81,8 @@ bool multiplicarNxN(const vector<vector<double>>& A, const vector<vector<double>
 
 // Imprime matriz con separador sep.
 void imprimirMatriz(const vector<vector<double>>& M, const string& sep) {
-    cout.setf(ios::fixed); cout.precision(6);
+    cout << "Resultados Multiplicación de Matrices: \n\n";
+    cout.setf(ios::fixed); cout.precision(0);
     for (size_t i = 0; i < M.size(); ++i) {
         for (size_t j = 0; j < M[i].size(); ++j) {
             if (j) cout << sep;

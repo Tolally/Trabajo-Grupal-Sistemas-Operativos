@@ -24,7 +24,13 @@ MULTI_BIN := $(BIN_DIR)/multi
 
 .PHONY: all clean run run-multi
 
-all: $(PGM_BIN) $(MULTI_BIN)
+CREATE_INDEX_SRC := $(SRC_DIR)/create_index.cpp
+CREATE_INDEX_BIN := $(BIN_DIR)/create_index
+
+all: $(PGM_BIN) $(MULTI_BIN) $(CREATE_INDEX_BIN)
+
+$(CREATE_INDEX_BIN): $(CREATE_INDEX_SRC) | $(BIN_DIR)
+	$(CC) $(CFLAGS) $(CREATE_INDEX_SRC) -o $@
 
 $(BIN_DIR):
 	@mkdir -p $(BIN_DIR)
