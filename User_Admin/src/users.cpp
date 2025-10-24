@@ -1,14 +1,10 @@
-#include "../include/users.h"
+#include "users.h"
 
 // Carga todos los usuarios desde el archivo indicado, con el id, nombre, usuario, contraseña y tipo de perfil separados por punto y coma.
 vector<Usuario> cargarUsuarios(const string& rutaArchivo) {
     vector<Usuario> usuarios;
-    ifstream archivo(rutaArchivo);
 
-    // Si el archivo no existe, lo creamos vacío
-    {
-        ofstream creador(rutaArchivo, ios::app);
-    }
+    ifstream archivo(rutaArchivo);
     
     string linea;
     while (getline(archivo, linea)) {
@@ -17,7 +13,6 @@ vector<Usuario> cargarUsuarios(const string& rutaArchivo) {
         stringstream ss(linea);
         Usuario u;
         string idStr;
-
         getline(ss, idStr, ';');
         getline(ss, u.nombre, ';');
         getline(ss, u.username, ';');
