@@ -2,6 +2,8 @@
     "files.associations": {
         "iostream": "cpp",
         "string": "cpp",
-        "algorithm": "cpp"
+        "algorithm": "cpp",
+        "ostream": "cpp",
+        "limits": "cpp"
     }
 }

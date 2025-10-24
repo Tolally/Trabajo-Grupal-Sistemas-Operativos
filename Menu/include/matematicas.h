@@ -14,6 +14,9 @@ double calcularFx(double x);
 // Lee una matriz desde archivo con separador 'sep' (string). Valida formato rectangular.
 bool leerMatriz(const string& ruta, const string& sep, vector<vector<double>>& M, string& err);
 
+// Verifica que la matriz es de orden NxN
+bool esMatrizDeNxN(const string& ruta, int N, const string& sep);
+
 // Multiplica A (n x n) por B (n x n) y deja resultado en C.
 bool multiplicarNxN(
     const vector<vector<double>>& A,

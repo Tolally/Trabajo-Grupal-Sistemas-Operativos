@@ -15,6 +15,8 @@ namespace {
     }
 }
 
+
+
 // Muestra y gestiona el menú principal. Retorna la opción elegida.
 int mostrarMenuPrincipal(const string& username, const string& perfil) {
     cout << "==============================\n";
@@ -22,12 +24,14 @@ int mostrarMenuPrincipal(const string& username, const string& perfil) {
     cout << "==============================\n";
     cout << "User: " << username << " (" << perfil << ")\n";
     cout << "\n0) Salir\n";
-    cout << "1) Admin Users (En construcción)\n";
+    if (perfil == "ADMIN")
+        cout << "1) Admin Users\n";
     cout << "2) Multi Matrices NxN\n";
-    cout << "3) Juego\n";
+    cout << "3) Juego (En construcción)\n";
     cout << "4) ¿Es palíndromo?\n";
     cout << "5) Calcula f(x) = x^2 + 2x + 8\n";
     cout << "6) Conteo sobre texto\n";
+    cout << "7) Crea índice invertido\n";
     cout << "\nOpción : ";
     return leerEnteroSeguro();
 }
@@ -104,6 +108,144 @@ void pantallaConteoTexto(const string& rutaArchivo) {
     cout << "- palabras: " << c.palabras << "\n";
     cout << "\n(Enter para volver)";
     cin.get();
+}
+
+// Interfaz para crear índice invertido: pide archivo .idx, carpeta libros y ejecuta programa externo.
+void pantallaCrearIndiceInvertido() {
+    std::string nombreArchivo, pathCarpeta;
+    namespace fs = std::filesystem;
+
+    // --- 3a) Pedir nombre de archivo .idx ---
+    while (true) {
+        std::cout << "Ingrese nombre del archivo a crear (debe terminar en .idx, o '0' para cancelar): ";
+        std::cin >> nombreArchivo;
+
+        if (nombreArchivo == "0") {
+            std::cout << "Operación cancelada por el usuario.\n";
+            return;
+        }
+
+        if (nombreArchivo.size() >= 4 && nombreArchivo.substr(nombreArchivo.size() - 4) == ".idx") {
+            break;
+        }
+
+        std::cerr << "Error: el archivo debe tener extensión .idx\n";
+    }
+
+    // --- 3b) Pedir path de carpeta ---
+    while (true) {
+        std::cout << "Ingrese el path de la carpeta con los libros (o '0' para cancelar): ";
+        std::cin >> pathCarpeta;
+
+        if (pathCarpeta == "0") {
+            std::cout << "Operación cancelada por el usuario.\n";
+            return;
+        }
+
+        if (fs::exists(pathCarpeta) && fs::is_directory(pathCarpeta)) {
+            break;
+        }
+
+        std::cerr << "Error: la carpeta no existe o no es válida\n";
+    }
+
+    // --- 2) Variable de entorno ---
+    const char* progPath = std::getenv("CREATE_INDEX");
+    if (!progPath) {
+        std::cerr << "Error: Variable de entorno CREATE_INDEX no definida.\n";
+        return;
+    }
+    
+    // --- 3c) Ejecutar programa externo ---
+    std::string comando = std::string(progPath) + " " + nombreArchivo + " " + pathCarpeta;
+    std::cout << "Creando índice invertido...\n";
+    int resultado = std::system(comando.c_str());
+
+    if (resultado != 0) {
+        std::cout << "Error al ejecutar el programa externo.\n";
+    }
+}
+
+
+void multiplicarMatrices(){
+    limpiarConsola();
+    string Nstr, sep, rutaMatrizA, rutaMatrizB;
+    cout << "=== Multiplicador de Matrices ===\n";
+    cout << "Para ejecutar esta aplicación, debe ingresar: \n";
+    cout << "Dimensión Matriz Cuadrada NxN (N, o 0 para cancelar): ";
+    getline(cin, Nstr);
+    if (Nstr == "0") {
+        cout << "Operación cancelada.\n";
+        return;
+    }
+    int N = stoi(Nstr);
+
+    cout << "Separador del archivo de matrices (o 0 para cancelar): ";
+
+    getline(cin, sep);
+    if (sep == "0") {
+        cout << "Operación cancelada.\n";
+        return;
+    }
+
+    while (true) {
+        cout << "Ruta Matriz 1 (o 0 para cancelar): ";
+        getline(cin, rutaMatrizA);
+        if (rutaMatrizA == "0") {
+            cout << "Operación cancelada.\n";
+            return;
+        }
+        if (!esMatrizDeNxN(rutaMatrizA, N, sep))
+            cout <<"Matriz no válida o no es de " << N << "x" << N << ", por favor ingresar nuevamente\n";
+        else break;
+    }
+    cout << "Primera matriz cargada con éxito \n\n";
+    while (true) {
+        cout << "Ruta Matriz 2 (o 0 para cancelar): ";
+        getline(cin, rutaMatrizB);
+        if (rutaMatrizB == "0") {
+            cout << "Operación cancelada.\n";
+            return;
+        }
+        if (!esMatrizDeNxN(rutaMatrizB, N, sep))
+            cout <<"Matriz no válida o no es de " << N << "x" << N << ", por favor ingresar nuevamente\n";
+        else break;
+    }
+    cout << "Segunda matriz cargada con éxito \n";
+    while (true) {
+    cout << "\n1) Multiplicar     2) Cancelar\n";
+    cout << "Opción : ";
+    int op;
+    if (cin >> op) {
+
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+        switch (op) {
+            case 1: {
+                const char* rutaMulti = getenv("MULTI_M");
+                string multiplicacion = string(rutaMulti) + " " + rutaMatrizA + " " + rutaMatrizB + " " + sep;
+                limpiarConsola();
+                system(multiplicacion.c_str());
+                return;
+            }
+            case 2:
+                cout << "Operación cancelada.\n";
+                return;
+            default:
+                cout << "Opción inválida. Intente nuevamente.\n";
+                break;
+        }
+    } else {
+        cin.clear();
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        cout << "Entrada inválida. Intente nuevamente.\n";
+    }
+}
+}
+
+bool verificarRutaMatriz(string& rutaMatriz){
+    struct stat buffer;
+    return (stat(rutaMatriz.c_str(), &buffer) == 0);
 }
 
 void limpiarConsola(){
