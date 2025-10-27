@@ -27,11 +27,12 @@ int mostrarMenuPrincipal(const string& username, const string& perfil) {
     if (perfil == "ADMIN")
         cout << "1) Admin Users\n";
     cout << "2) Multi Matrices NxN\n";
-    cout << "3) Juego (En construcción)\n";
+    cout << "3) Juego\n";
     cout << "4) ¿Es palíndromo?\n";
     cout << "5) Calcula f(x) = x^2 + 2x + 8\n";
     cout << "6) Conteo sobre texto\n";
     cout << "7) Crea índice invertido\n";
+    cout << "8) Crea índice invertido (Paralelo)\n";
     cout << "\nOpción : ";
     return leerEnteroSeguro();
 }

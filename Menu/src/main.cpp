@@ -1,6 +1,7 @@
 #include "../include/interface.h"
 #include "../include/matematicas.h"
 #include "../include/validacion.h"
+#include "../include/create_index.h"
 
 #include <unistd.h>
 #include <iostream>
@@ -89,6 +90,7 @@ int main(int argc, char** argv) {
         string rutaUsuarios = resolverRuta(getEnvOr("USER_FILE", "data/USUARIOS.txt"));
         string rutaPerfiles = resolverRuta(getEnvOr("PERFILES_FILE", "data/PERFILES.TXT"));
         string rutaAdmin = resolverRuta(getEnvOr("ADMIN_SYS", ""));
+        string rutaParalelo = resolverRuta(getEnvOr("INDICE-INVET-PARALELO",""));
 
         // Cargar usuarios y autenticar
         auto usuarios = cargarUsuarios(rutaUsuarios);
@@ -155,6 +157,12 @@ int main(int argc, char** argv) {
                 case 7: {
                     limpiarConsola();
                     pantallaCrearIndiceInvertido();
+                    break;
+                }
+                case 8: {
+                    limpiarConsola();
+                    system(rutaParalelo.c_str());
+                    limpiarConsola();
                     break;
                 }
                 default:

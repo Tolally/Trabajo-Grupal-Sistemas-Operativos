@@ -1,14 +1,5 @@
-#include <filesystem>
-#include <fstream>
-#include <iostream>
-#include <map>
-#include <sstream>
-#include <filesystem>
-#include <vector>
-#include <cctype>
-#include <unistd.h>
+#include "../include/create_index.h"
 
-using namespace std;
 namespace fs = std::filesystem;
 
 bool crearIndiceInvertido(const string& nombreArchivo, const string& carpetaLibros) {
