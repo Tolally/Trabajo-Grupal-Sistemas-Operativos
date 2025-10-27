@@ -32,6 +32,7 @@ int mostrarMenuPrincipal(const string& username, const string& perfil) {
     cout << "5) Calcula f(x) = x^2 + 2x + 8\n";
     cout << "6) Conteo sobre texto\n";
     cout << "7) Crea índice invertido\n";
+    cout << "8) Crea índice invertido paralelo\n";
     cout << "\nOpción : ";
     return leerEnteroSeguro();
 }
@@ -161,6 +162,41 @@ void pantallaCrearIndiceInvertido() {
     std::cout << "Creando índice invertido...\n";
     int resultado = std::system(comando.c_str());
 
+    if (resultado != 0) {
+        std::cout << "Error al ejecutar el programa externo.\n";
+    }
+}
+
+// Interfaz para crear índice invertido paralelo: pide archivo .idx, carpeta de libros y ejecuta el programa externo indicado en INDICE_INVET_PARALELO.
+void pantallaCrearIndiceInvertidoParalelo() {
+    std::string nombreArchivo, pathCarpeta;
+    namespace fs = std::filesystem;
+
+    while (true) {
+        std::cout << "Ingrese nombre del archivo a crear (debe terminar en .idx, o '0' para cancelar): ";
+        std::cin >> nombreArchivo;
+        if (nombreArchivo == "0") { std::cout << "Operación cancelada por el usuario.\n"; return; }
+        if (nombreArchivo.size() >= 4 && nombreArchivo.substr(nombreArchivo.size() - 4) == ".idx") break;
+        std::cerr << "Error: el archivo debe tener extensión .idx\n";
+    }
+
+    while (true) {
+        std::cout << "Ingrese el path de la carpeta con los libros (o '0' para cancelar): ";
+        std::cin >> pathCarpeta;
+        if (pathCarpeta == "0") { std::cout << "Operación cancelada por el usuario.\n"; return; }
+        if (fs::exists(pathCarpeta) && fs::is_directory(pathCarpeta)) break;
+        std::cerr << "Error: la carpeta no existe o no es válida\n";
+    }
+
+    const char* progPath = std::getenv("INDICE_INVET_PARALELO");
+    if (!progPath) {
+        std::cerr << "Error: Variable de entorno INDICE_INVET_PARALELO no definida.\n";
+        return;
+    }
+
+    std::string comando = std::string(progPath) + " " + nombreArchivo + " " + pathCarpeta;
+    std::cout << "Creando índice invertido paralelo...\n";
+    int resultado = std::system(comando.c_str());
     if (resultado != 0) {
         std::cout << "Error al ejecutar el programa externo.\n";
     }

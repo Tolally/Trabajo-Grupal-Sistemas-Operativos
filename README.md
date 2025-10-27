@@ -4,6 +4,36 @@
 - Matias Toledo
 - Carlos Duarte
 
+# Entregable 3 - Sistemas Operativos - Grupo 4
+## Problema 1 - Trabajo sobre el índice invertido
+Se agrega al menú principal una opción nueva para crear el indice invertido, con la diferencia de que en esta ocasión el proceso se realiza en paralelo.
+Este programa cuenta con las siguientes características:
+- Hilos configurables con `N_THREADS` y procesamiento por lotes `N_LOTE`.
+- Crea el mapa de libros con formato `id; nombre_libro`.
+- El archivo de salida `.idx` utiliza el id del libro en lugar del nombre.
+- Registra log del proceso de esta forma: `id_thread;id_libro;cantidad_palabras;ts_inicio;ts_termino`.
+- Todos estos archivos creados se guardan en `data/indices/`.
+
+Compilar:
+```
+make -C Menu
+```
+
+Ejecutar (por ejemplo):
+```
+./Menu/bin/pgm -u Tolally -p 12345 -f "libros/010 - Alice's Adventures in Wonderland by Lewis Carroll (48778) (pg11).txt"
+```
+
+Se agregaron las siguientes variables de entorno al .env:
+```
+INDICE_INVET_PARALELO=Menu/bin/create_index_parallel
+N_THREADS=4
+N_LOTE=8
+MAPA_LIBROS=data/indices/mapa_libros.txt
+PARALLEL_LOG=data/indices/parallel.log
+```
+## Problema 2 - Trabajo sobre videojuego
+
 # Entregable 2 - Sistemas Operativos - Grupo 4
 ## Propósito de la aplicación
 MENÚ PRINCIPAL con autenticación por argumentos y control de permisos por perfil.

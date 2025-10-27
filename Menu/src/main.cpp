@@ -157,6 +157,11 @@ int main(int argc, char** argv) {
                     pantallaCrearIndiceInvertido();
                     break;
                 }
+                case 8: {
+                    limpiarConsola();
+                    pantallaCrearIndiceInvertidoParalelo();
+                    break;
+                }
                 default:
                     limpiarConsola();
                     cout << "Opción inválida. Intente nuevamente.\n";
