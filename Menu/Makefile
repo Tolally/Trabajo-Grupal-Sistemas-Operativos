@@ -26,11 +26,16 @@ MULTI_BIN := $(BIN_DIR)/multi
 
 CREATE_INDEX_SRC := $(SRC_DIR)/create_index.cpp
 CREATE_INDEX_BIN := $(BIN_DIR)/create_index
+CREATE_INDEX_PAR_SRC := $(SRC_DIR)/create_index_parallel.cpp
+CREATE_INDEX_PAR_BIN := $(BIN_DIR)/create_index_parallel
 
-all: $(PGM_BIN) $(MULTI_BIN) $(CREATE_INDEX_BIN)
+all: $(PGM_BIN) $(MULTI_BIN) $(CREATE_INDEX_BIN) $(CREATE_INDEX_PAR_BIN)
 
 $(CREATE_INDEX_BIN): $(CREATE_INDEX_SRC) | $(BIN_DIR)
 	$(CC) $(CFLAGS) $(CREATE_INDEX_SRC) -o $@
+
+$(CREATE_INDEX_PAR_BIN): $(CREATE_INDEX_PAR_SRC) | $(BIN_DIR)
+	$(CC) $(CFLAGS) $(CREATE_INDEX_PAR_SRC) -o $@
 
 $(BIN_DIR):
 	@mkdir -p $(BIN_DIR)
@@ -55,4 +60,4 @@ run-multi: $(MULTI_BIN)
 	$(MULTI_BIN) "$$A" "$$B" "$$SEP"
 
 clean:
-	rm -f $(BIN_DIR)/*.o $(PGM_BIN) $(MULTI_BIN)
+	rm -f $(BIN_DIR)/*.o $(PGM_BIN) $(MULTI_BIN) $(CREATE_INDEX_BIN) $(CREATE_INDEX_PAR_BIN)

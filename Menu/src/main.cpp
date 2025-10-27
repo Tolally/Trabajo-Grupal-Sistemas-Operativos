@@ -161,6 +161,11 @@ int main(int argc, char** argv) {
                 }
                 case 8: {
                     limpiarConsola();
+                    pantallaCrearIndiceInvertidoParalelo();
+                    break;
+                }
+                case 9: {
+                    limpiarConsola();
                     system(rutaParalelo.c_str());
                     limpiarConsola();
                     break;

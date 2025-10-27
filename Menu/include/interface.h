@@ -23,6 +23,9 @@ void pantallaConteoTexto(const string& rutaArchivo);
 // Interfaz para crear índice invertido: pide archivo .idx, carpeta libros y ejecuta programa externo.
 void pantallaCrearIndiceInvertido();
 
+// Interfaz para crear índice invertido paralelo: parecido a lo anterior pero llama al ejecutable de la variable de entorno INDICE_INVET_PARALELO.
+void pantallaCrearIndiceInvertidoParalelo();
+
 // Muestra la interfaz de llamar a multiplicador de matrices. Retorna verdadero o falso si se desea o no multiplicar
 void multiplicarMatrices();
 
