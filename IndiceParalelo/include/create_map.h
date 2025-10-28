@@ -4,6 +4,8 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <map>
+#include <unordered_map>
 #include <string>
 #include <algorithm>
 #include <regex>
@@ -22,3 +24,7 @@ long extraccionNumeroPrefijo(const std::string& s);
 std::vector<std::vector<fs::directory_entry>> create_map(const std::string& dir,
                                                          const std::string& out,
                                                          int loteSize = 6);
+
+
+// Carga el MAPA-LIBROS (formato "id; title") y devuelve un mapa title -> id
+std::unordered_map<std::string,std::string> cargarMapaLibros(const std::string& mapaPath);

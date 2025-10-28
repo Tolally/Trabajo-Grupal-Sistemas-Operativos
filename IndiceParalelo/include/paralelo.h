@@ -15,6 +15,16 @@ namespace fs = std::filesystem;
 
 using namespace std;
 
+// estructura de log por archivo procesado
+struct LogEntry {
+    int threadId;
+    std::string bookId;    // id numérico del libro (o filename si fallback)
+    size_t wordCount;
+    long long start_ms;    // <--- cambió a milisegundos
+    long long end_ms;      // <--- cambió a milisegundos
+};
+
+
 static unsigned int obtenerThreadsHardware();
 
 int pedirNumeroThreads(unsigned int maxThreads);

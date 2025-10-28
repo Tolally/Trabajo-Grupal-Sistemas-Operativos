@@ -2,12 +2,6 @@
 
 using namespace std;
 
-// Elimina prefijo numérico y separadores comunes ("001 - ", "01_", "12. ", etc.)
-string limpiarTitulo(const string& name) {
-    static const regex pref(R"(^\s*\d+[\s\._:-]*)");
-    return regex_replace(name, pref, "");
-}
-
 long extraccionNumeroPrefijo(const string& s) {
     size_t i = 0;
     while (i < s.size() && isspace((unsigned char)s[i])) ++i;
@@ -19,6 +13,12 @@ long extraccionNumeroPrefijo(const string& s) {
         ++i;
     }
     return found ? num : -1;
+}
+
+// Igual limpieza que create_map: elimina prefijo numérico y separadores
+string limpiarTitulo(const string& name) {
+    static const regex pref(R"(^\s*\d+[\s\._:-]*)");
+    return regex_replace(name, pref, "");
 }
 
 // Crea lotes en memoria a partir del vector files.
@@ -89,4 +89,37 @@ vector<vector<fs::directory_entry>> create_map(const string& dir, const string& 
         cerr << "Error: " << ex.what() << "\n";
         return {};
     }
+}
+
+
+// Carga el fichero mapa (formato: id; title) y devuelve mapa title -> id
+unordered_map<string,string> cargarMapaLibros(const string& mapaPath) {
+    unordered_map<string,string> mapa;
+    ifstream is(mapaPath);
+    if (!is.is_open()) {
+        // no existe: devolver mapa vacío
+        return mapa;
+    }
+    string line;
+    while (getline(is, line)) {
+        if (line.empty()) continue;
+        // dividir en "id; title"
+        size_t p = line.find(';');
+        if (p == string::npos) continue;
+        string id = line.substr(0, p);
+        string title = line.substr(p + 1);
+        // trim espacios
+        auto trim = [](string &s){
+            size_t a = s.find_first_not_of(" \t\r\n");
+            size_t b = s.find_last_not_of(" \t\r\n");
+            if (a==string::npos) { s.clear(); return; }
+            s = s.substr(a, b - a + 1);
+        };
+        trim(id);
+        trim(title);
+        if (!id.empty() && !title.empty()) {
+            mapa[title] = id;
+        }
+    }
+    return mapa;
 }

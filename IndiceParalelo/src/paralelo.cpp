@@ -47,61 +47,7 @@ int pedirNumeroThreads(unsigned int maxThreadsH, int nThreadsEnv) {
         cout << "Debe ingresar un entero mayor que 0 y menor que " << max << ". Intente nuevamente.\n";
     }
 }
-/*
-// procesa un lote: construye texto de log, crea y guarda índice parcial,
-// devuelve la duración en microsegundos en 'dur_us' y acumula el texto en 'out'.
-long long procesarLote(const vector<fs::directory_entry>& lote,
-                       int loteId,
-                       int threadId,
-                       const fs::path& carpetaIndices,
-                       string &out)
-{
-    using clk = chrono::high_resolution_clock;
-    auto t0 = clk::now();
 
-    out += "Thread " + to_string(threadId) + " procesando lote " + to_string(loteId)
-         + " (" + to_string(lote.size()) + " libros)\n";
-
-    for (size_t i = 0; i < lote.size(); ++i) {
-        out += "  [" + to_string(loteId) + "." + to_string(i + 1) + "] "
-             + lote[i].path().filename().string() + "\n";
-    }
-
-    // Nombre único por thread/lote para el índice parcial
-    string nombreArchivo = "partial_" + to_string(threadId) + "_" + to_string(loteId) + ".idx";
-    fs::path rutaSalida = carpetaIndices / nombreArchivo;
-
-    // crear índice parcial y guardarlo
-    Index parcial = crearIndiceInvertidoPorLote(rutaSalida.string(), lote);
-    if (!guardarIndice(rutaSalida.string(), parcial)) {
-        out += "Error: no se pudo guardar índice parcial: " + rutaSalida.string() + "\n";
-    }
-
-    long long dur_us = chrono::duration_cast<chrono::microseconds>(clk::now() - t0).count();
-
-    out += "Thread " + to_string(threadId) + " finalizó lote " + to_string(loteId)
-         + " (tiempo " + to_string(dur_us) + " µs)\n";
-
-    return dur_us;
-}
-
-// funcion que procesa un lote (sustituir por la lógica real de creación de índice)
-void procesarLote(const vector<fs::directory_entry>& lote, int loteId, int threadId) {
-    cout << "Thread " << threadId << " procesando lote " << loteId << " (" << lote.size() << " libros)\n";
-
-    fs::path carpetaIndices = "data/indices";
-    if (!fs::exists(carpetaIndices)) {
-        fs::create_directories(carpetaIndices);
-    }
-
-    const char* nombreArchivo = "textX.idx";
-
-    fs::path rutaSalida = carpetaIndices / nombreArchivo;
-
-    crearIndiceInvertidoPorLote(rutaSalida.string(), lote);
-
-    cout << "Thread " << threadId << " finalizó lote " << loteId << "\n";
-}*/
 
 // función auxiliar para mergear un índice parcial en el índice destino
 void mergeIndex (Index &dest, const Index &src){
@@ -203,11 +149,13 @@ void invertidoParalelo(){
     // Buffers por thread (cada hilo escribe solo en su índice)
     vector<string> threadOutputs(useThreads);          // acumulador de salida por hilo
     vector<int> countPerThread(useThreads, 0);         // contadores
-    vector<long long> timePerThread(useThreads, 0);    // tiempos acumulados (us)
+    vector<long long> timePerThread(useThreads, 0);    // tiempos acumulados (ms)
 
     // vector para almacenar índices parciales producidos por cada hilo (sin race: hilo t escribe solo en slot t)
     vector<Index> partialIndices(useThreads);
 
+    // vector para almacenar logs por hilo (cada hilo escribe sólo en partialLogs[t])
+    vector<vector<LogEntry>> partialLogs(useThreads);
 
     // start latch: todos los hilos esperan hasta que el master levante la bandera
     atomic<bool> start{false};
@@ -215,10 +163,13 @@ void invertidoParalelo(){
     vector<thread> threadPool;
     threadPool.reserve(useThreads);
 
+    // ... antes de crear los hilos, cargar el mapa:
+    auto mapaLibros = cargarMapaLibros("data/indices/mapa.txt");
+
     for (int t = 0; t < useThreads; ++t) {
         threadPool.emplace_back([t, &nextLote, totalLotes, &lotes,
                                  &threadOutputs, &countPerThread, &timePerThread, &start,
-                                 carpetaIndices, &partialIndices]() {
+                                 carpetaIndices, &partialIndices, &partialLogs, mapaLibros]() {
             using clk = chrono::high_resolution_clock;
             string out; // buffer local por hilo
 
@@ -230,28 +181,60 @@ void invertidoParalelo(){
                 size_t idx = nextLote.fetch_add(1, memory_order_relaxed);
                 if (idx >= totalLotes) break;
 
-                // Crear índice parcial del lote (cada hilo obtiene su Index)
-                Index parcial = crearIndiceInvertidoPorLote(lotes[idx]);
-
-                // mergear parcial en el slot del hilo (solo este hilo escribe partialIndices[t])
-                mergeIndex(partialIndices[t], parcial);
-
-                // registrar salida y tiempo
-                auto t0 = clk::now();
-
                 out += "Thread " + to_string(t) + " procesando lote " + to_string(idx + 1)
                      + " (" + to_string(lotes[idx].size()) + " libros)\n";
+
+                // procesar archivo por archivo (para obtener timestamps por libro)
                 for (size_t i = 0; i < lotes[idx].size(); ++i) {
-                    out += "  [" + to_string(idx + 1) + "." + to_string(i + 1) + "] "
-                         + lotes[idx][i].path().filename().string() + "\n";
+                    const auto &entry = lotes[idx][i];
+
+                    // determinar docId consistente con crearIndiceInvertidoPorLote(...)
+                    string filename = entry.path().filename().string();
+                    string stem = entry.path().stem().string();
+                    string titleKey = limpiarTitulo(stem);
+                    string docId = filename; // fallback
+                    auto itMap = mapaLibros.find(titleKey);
+                    if (itMap != mapaLibros.end()) docId = itMap->second;
+
+                    // medir inicio
+                    auto t0 = clk::now();
+
+                    // crear índice parcial del único fichero (usa la versión que recibe el mapa)
+                    vector<fs::directory_entry> single{ entry };
+                    Index fileIdx = crearIndiceInvertidoPorLote(single, mapaLibros);
+
+                    // contar palabras para el docId (sumar las frecuencias en fileIdx)
+                    size_t wordCount = 0;
+                    for (const auto &kv : fileIdx) {
+                        const auto &docs = kv.second;
+                        auto itDoc = docs.find(docId);
+                        if (itDoc != docs.end()) wordCount += static_cast<size_t>(itDoc->second);
+                    }
+
+                    // mergear fileIdx en el índice parcial del hilo
+                    mergeIndex(partialIndices[t], fileIdx);
+
+                    // medir fin
+                    auto t1 = clk::now();
+
+                    // calcular milisegundos
+                    long long start_ms = chrono::duration_cast<chrono::milliseconds>(t0.time_since_epoch()).count();
+                    long long end_ms   = chrono::duration_cast<chrono::milliseconds>(t1.time_since_epoch()).count();
+                    long long dur_ms   = chrono::duration_cast<chrono::milliseconds>(t1 - t0).count();
+
+                    // actualizar estadísticas del hilo (ahora en ms)
+                    timePerThread[t] += dur_ms;
+
+                    // registrar log (cada hilo escribe sólo en partialLogs[t])
+                    partialLogs[t].push_back(LogEntry{t, docId, wordCount, start_ms, end_ms});
+
+                    // construir salida legible (opcional)
+                    out += "  [" + to_string(idx + 1) + "." + to_string(i + 1) + "] " + filename + "\n";
                 }
-                auto dur_us = chrono::duration_cast<chrono::microseconds>(clk::now() - t0).count();
 
                 ++countPerThread[t];
-                timePerThread[t] += dur_us;
 
-                out += "Thread " + to_string(t) + " finalizó lote " + to_string(idx + 1)
-                     + " (tiempo " + to_string(dur_us) + " µs)\n";
+                out += "Thread " + to_string(t) + " finalizó lote " + to_string(idx + 1) + "\n";
             }
 
             // almacenar el output acumulado en el slot reservado (escrito por único hilo)
@@ -267,6 +250,23 @@ void invertidoParalelo(){
     // Después de join: mergear todos los índices parciales en 'indice' (hilo principal)
     for (int t = 0; t < useThreads; ++t) {
         mergeIndex(indice, partialIndices[t]);
+    }
+
+    // Escribir log de ejecución (csv)
+    fs::path rutaLog = carpetaIndices / (nombreArchivo + ".runlog.csv");
+    ofstream logf(rutaLog);
+    if (logf.is_open()) {
+        logf << "thread,book,word_count,start_us,end_us\n";
+        for (int t = 0; t < useThreads; ++t) {
+            for (const auto &e : partialLogs[t]) {
+                logf << e.threadId << ',' 
+                     << '"' << e.bookId << '"' << ','
+                     << e.wordCount << ',' << e.start_ms << ',' << e.end_ms << '\n';
+            }
+        }
+        logf.close();
+    } else {
+        cerr << "No se pudo abrir archivo de log: " << rutaLog << "\n";
     }
 
     // guardar índice final en rutaSalida
