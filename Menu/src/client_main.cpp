@@ -89,10 +89,10 @@ void reader_thread_func(int sock, const string& username) {
         if (type == "YOURTURN") {
             myTurn = true;
             string message = parts.size()>1?parts[1]:"";
-            cout << endl << "🎲 " << message << endl;
+            cout << endl << " " << message << endl;
         } 
         else if (type == "ROLLING") {
-            cout << endl << "⚡ Lanzando el dado";
+            cout << endl << " Lanzando el dado";
             for (int i = 0; i < 3; i++) {
                 cout << ".";
                 cout.flush();
@@ -102,7 +102,7 @@ void reader_thread_func(int sock, const string& username) {
         } 
         else if (type == "ROLL_RESULT") {
             string result = parts.size()>1?parts[1]:"";
-            cout << endl << "🎯 " << result << endl;
+            cout << endl << " " << result << endl;
         } 
         else if (type == "SCORES") {
             if (parts.size() > 1) {
@@ -110,7 +110,7 @@ void reader_thread_func(int sock, const string& username) {
             }
         } 
         else if (type == "START") {
-            cout << endl << "🚀 ¡JUEGO INICIADO!" << endl;
+            cout << endl << "¡JUEGO INICIADO!" << endl;
             if (parts.size() > 1) {
                 cout << "Meta: " << parts[1] << " puntos" << endl;
             }
@@ -119,20 +119,20 @@ void reader_thread_func(int sock, const string& username) {
             }
         } 
         else if (type == "END") {
-            cout << endl << "🏆 ¡JUEGO TERMINADO! 🏆" << endl;
+            cout << endl << "¡JUEGO TERMINADO!" << endl;
             cout << "Ganador: " << (parts.size()>1?parts[1]:"") << endl;
             running = false;
             break;
         } 
         else if (type == "LOBBY") {
-            cout << endl << "👥 Sala: " << (parts.size()>1?parts[1]:"") << endl;
+            cout << endl << " Sala: " << (parts.size()>1?parts[1]:"") << endl;
         } 
         else if (type == "WELCOME") {
-            cout << endl << "✅ Conectado al servidor" << endl;
+            cout << endl << " Conectado al servidor" << endl;
         } 
         else if (type == "TURN_INFO") {
             string turnInfo = parts.size()>1?parts[1]:"";
-            cout << endl << "📢 " << turnInfo << endl;
+            cout << endl << "" << turnInfo << endl;
         } 
         else if (type == "PLAYER_LEFT") {
             string info = parts.size()>1?parts[1]:"";
@@ -140,11 +140,11 @@ void reader_thread_func(int sock, const string& username) {
             if (sep_pos != string::npos) {
                 string playerName = info.substr(0, sep_pos);
                 string teamName = info.substr(sep_pos + 1);
-                cout << endl << "❌ " << playerName << " del equipo " << teamName << " se desconectó" << endl;
+                cout << endl << " " << playerName << " del equipo " << teamName << " se desconectó" << endl;
             }
         } 
         else if (type == "ERROR") {
-            cout << endl << "❌ Error: " << (parts.size()>1?parts[1]:"") << endl;
+            cout << endl << " Error: " << (parts.size()>1?parts[1]:"") << endl;
         } 
         else {
             cout << "[MSG] " << line << endl;
