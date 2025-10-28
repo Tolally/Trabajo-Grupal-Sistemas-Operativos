@@ -1,6 +1,6 @@
 #include "../include/paralelo.h"
 #include "../include/create_map.h"
-#include "../include/create_index2.h"
+#include "../include/create_index_paralel.h"
 
 
 static unsigned int obtenerThreadsHardware() {
@@ -22,7 +22,7 @@ int pedirNumeroThreads(unsigned int maxThreadsH, int nThreadsEnv) {
 
     int max = 0;
 
-    if (maxThreadsH >= static_cast<unsigned int>(nThreadsEnv))
+    if (maxThreadsH <= static_cast<unsigned int>(nThreadsEnv))
         max = maxThreadsH;
     else 
         max = nThreadsEnv;
@@ -41,26 +41,79 @@ int pedirNumeroThreads(unsigned int maxThreadsH, int nThreadsEnv) {
 
         if (value == 0) 
             return 0; // cancelar
-        if (value > 0 && value < max)  
+        if (value > 0 && value <= max)  
             return value;
 
         cout << "Debe ingresar un entero mayor que 0 y menor que " << max << ". Intente nuevamente.\n";
     }
 }
+/*
+// procesa un lote: construye texto de log, crea y guarda índice parcial,
+// devuelve la duración en microsegundos en 'dur_us' y acumula el texto en 'out'.
+long long procesarLote(const vector<fs::directory_entry>& lote,
+                       int loteId,
+                       int threadId,
+                       const fs::path& carpetaIndices,
+                       string &out)
+{
+    using clk = chrono::high_resolution_clock;
+    auto t0 = clk::now();
 
-// funcion que procesa un lote (sustituir por la lógica real de creación de índice)
-static void procesarLote(const vector<fs::directory_entry>& lote, int loteId, int threadId) {
-    cout << "Thread " << threadId << " procesando lote " << loteId << " (" << lote.size() << " libros)\n";
+    out += "Thread " + to_string(threadId) + " procesando lote " + to_string(loteId)
+         + " (" + to_string(lote.size()) + " libros)\n";
+
     for (size_t i = 0; i < lote.size(); ++i) {
-        const auto &entry = lote[i];
-        cout << "  [" << loteId << "." << (i + 1) << "] " << entry.path().filename().string() << "\n";
-        // Aquí va la lógica real, por ejemplo:
-        // crearIndiceInvertido(...); o abrir archivo y procesar
-        // crearIndiceInvertido(/*nombreArchivo*/, /*carpetaLibros*/);
+        out += "  [" + to_string(loteId) + "." + to_string(i + 1) + "] "
+             + lote[i].path().filename().string() + "\n";
     }
-    cout << "Thread " << threadId << " finalizó lote " << loteId << "\n";
+
+    // Nombre único por thread/lote para el índice parcial
+    string nombreArchivo = "partial_" + to_string(threadId) + "_" + to_string(loteId) + ".idx";
+    fs::path rutaSalida = carpetaIndices / nombreArchivo;
+
+    // crear índice parcial y guardarlo
+    Index parcial = crearIndiceInvertidoPorLote(rutaSalida.string(), lote);
+    if (!guardarIndice(rutaSalida.string(), parcial)) {
+        out += "Error: no se pudo guardar índice parcial: " + rutaSalida.string() + "\n";
+    }
+
+    long long dur_us = chrono::duration_cast<chrono::microseconds>(clk::now() - t0).count();
+
+    out += "Thread " + to_string(threadId) + " finalizó lote " + to_string(loteId)
+         + " (tiempo " + to_string(dur_us) + " µs)\n";
+
+    return dur_us;
 }
 
+// funcion que procesa un lote (sustituir por la lógica real de creación de índice)
+void procesarLote(const vector<fs::directory_entry>& lote, int loteId, int threadId) {
+    cout << "Thread " << threadId << " procesando lote " << loteId << " (" << lote.size() << " libros)\n";
+
+    fs::path carpetaIndices = "data/indices";
+    if (!fs::exists(carpetaIndices)) {
+        fs::create_directories(carpetaIndices);
+    }
+
+    const char* nombreArchivo = "textX.idx";
+
+    fs::path rutaSalida = carpetaIndices / nombreArchivo;
+
+    crearIndiceInvertidoPorLote(rutaSalida.string(), lote);
+
+    cout << "Thread " << threadId << " finalizó lote " << loteId << "\n";
+}*/
+
+// función auxiliar para mergear un índice parcial en el índice destino
+void mergeIndex (Index &dest, const Index &src){
+    for (const auto &kv : src) {
+        const string &pal = kv.first;
+        const auto &docs = kv.second;
+        auto &destDocs = dest[pal]; // crea si hace falta
+        for (const auto &dd : docs) {
+            destDocs[dd.first] += dd.second;
+        }
+    }
+};
 
 void invertidoParalelo(){
     cout << "==============================\n";
@@ -68,28 +121,42 @@ void invertidoParalelo(){
     cout << "==============================\n\n";
 
     unsigned int nThreadsMax = obtenerThreadsHardware();
-    const char* envThreads = std::getenv("N_THREADS");
-    const char* envLote = std::getenv("N_LOTE");
+    const char* envThreads = getenv("N_THREADS");
+    const char* envLote = getenv("N_LOTE");
     int nThreadsEnv = envThreads ? atoi(envThreads) : 1;
     int nLote = envLote ? atoi(envLote) : 6;
     if (nLote <= 0) nLote = 6;
 
     cout << "==============================\n";
     cout << "  Indice Invertido Paralelo\n\n";
-    cout << "Threads hardware detectados: " << nThreadsMax << "\n";
-    cout << "Threads .env detectados: " << nThreadsEnv << "\n";
+    cout << " Threads hardware detectados: " << nThreadsMax << "\n";
+    cout << " Threads .env detectados: " << nThreadsEnv << "\n";
     cout << "==============================\n\n";
 
+    string salida;
+
     // generar mapa y lotes
-    static vector<vector<fs::directory_entry>> lotes = create_map("Menu/libros", "data/indices/mapa.txt", nLote);
+    vector<vector<fs::directory_entry>> lotes = create_map("Menu/libros", "data/indices/mapa.txt", nLote);
     if (lotes.empty()) {
         cout << "No hay lotes para procesar.\n";
+
+        cout << "Presione Enter para volver...\n";
+        // descartar resto de la línea previa (si lo hay) antes de usar getline
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+        getline(cin, salida);
         return;
     }
 
     int useThreads = pedirNumeroThreads(nThreadsMax, nThreadsEnv);
     if (useThreads <= 0) {
         cout << "Operación cancelada o número de threads inválido.\n";
+
+        cout << "Presione Enter para volver...\n";
+        // descartar resto de la línea previa (si lo hay) antes de usar getline
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+        getline(cin, salida);
         return;
     }
 
@@ -103,29 +170,147 @@ void invertidoParalelo(){
     atomic<size_t> nextLote{0};
     size_t totalLotes = lotes.size();
 
+    // Path carpeta indices
+    fs::path carpetaIndices = "data/indices";
+    if (!fs::exists(carpetaIndices)) {
+        fs::create_directories(carpetaIndices);
+    }
+
+    string nombreArchivo;
+
+    while (true) {
+        cout << "Ingrese nombre del archivo a crear (debe terminar en .idx, o '0' para cancelar): ";
+        cin >> nombreArchivo;
+        if (nombreArchivo == "0") { 
+            cout << "Operación cancelada por el usuario.\n"; 
+            cout << "Presione Enter para volver...\n";
+            // descartar resto de la línea previa (si lo hay) antes de usar getline
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+            getline(cin, salida);
+            return; 
+        }
+        if (nombreArchivo.size() >= 4 && nombreArchivo.substr(nombreArchivo.size() - 4) == ".idx") 
+            break;
+
+        cerr << "Error: el archivo debe tener extensión .idx\n";
+    }
+
+    fs::path rutaSalida = carpetaIndices / nombreArchivo;
+
+    Index indice;
+
+    // Buffers por thread (cada hilo escribe solo en su índice)
+    vector<string> threadOutputs(useThreads);          // acumulador de salida por hilo
+    vector<int> countPerThread(useThreads, 0);         // contadores
+    vector<long long> timePerThread(useThreads, 0);    // tiempos acumulados (us)
+
+    // vector para almacenar índices parciales producidos por cada hilo (sin race: hilo t escribe solo en slot t)
+    vector<Index> partialIndices(useThreads);
+
+
+    // start latch: todos los hilos esperan hasta que el master levante la bandera
+    atomic<bool> start{false};
+
     vector<thread> threadPool;
     threadPool.reserve(useThreads);
 
     for (int t = 0; t < useThreads; ++t) {
-        threadPool.emplace_back([t, &nextLote, totalLotes]() {
+        threadPool.emplace_back([t, &nextLote, totalLotes, &lotes,
+                                 &threadOutputs, &countPerThread, &timePerThread, &start,
+                                 carpetaIndices, &partialIndices]() {
+            using clk = chrono::high_resolution_clock;
+            string out; // buffer local por hilo
+
+            // esperar señal de inicio
+            while (!start.load(memory_order_acquire)) this_thread::yield();
+
+            // Procesar lotes dinámicamente
             while (true) {
-                size_t idx = nextLote.fetch_add(1, std::memory_order_relaxed);
-                if (idx >= totalLotes) break; // no quedan lotes
-                // Procesar lote idx
-                procesarLote(lotes[idx], static_cast<int>(idx + 1), t);
+                size_t idx = nextLote.fetch_add(1, memory_order_relaxed);
+                if (idx >= totalLotes) break;
+
+                // Crear índice parcial del lote (cada hilo obtiene su Index)
+                Index parcial = crearIndiceInvertidoPorLote(lotes[idx]);
+
+                // mergear parcial en el slot del hilo (solo este hilo escribe partialIndices[t])
+                mergeIndex(partialIndices[t], parcial);
+
+                // registrar salida y tiempo
+                auto t0 = clk::now();
+
+                out += "Thread " + to_string(t) + " procesando lote " + to_string(idx + 1)
+                     + " (" + to_string(lotes[idx].size()) + " libros)\n";
+                for (size_t i = 0; i < lotes[idx].size(); ++i) {
+                    out += "  [" + to_string(idx + 1) + "." + to_string(i + 1) + "] "
+                         + lotes[idx][i].path().filename().string() + "\n";
+                }
+                auto dur_us = chrono::duration_cast<chrono::microseconds>(clk::now() - t0).count();
+
+                ++countPerThread[t];
+                timePerThread[t] += dur_us;
+
+                out += "Thread " + to_string(t) + " finalizó lote " + to_string(idx + 1)
+                     + " (tiempo " + to_string(dur_us) + " µs)\n";
             }
-            cout << "Thread " << t << " terminado (no quedan lotes).\n";
+
+            // almacenar el output acumulado en el slot reservado (escrito por único hilo)
+            threadOutputs[t].swap(out);
         });
     }
 
+    // lanzar a la vez todos los hilos
+    start.store(true, memory_order_release);
+
     for (auto &th : threadPool) if (th.joinable()) th.join();
 
-    cout << "Todos los lotes procesados.\n";
+    // Después de join: mergear todos los índices parciales en 'indice' (hilo principal)
+    for (int t = 0; t < useThreads; ++t) {
+        mergeIndex(indice, partialIndices[t]);
+    }
+
+    // guardar índice final en rutaSalida
+    if (!guardarIndice(rutaSalida.string(), indice)) {
+        cerr << "Error: no se pudo guardar el índice final en " << rutaSalida << "\n";
+    }
+
+    // resumen (convertir µs a ms si quieres)
+    cout << "Resumen por thread:\n";
+    for (int t = 0; t < useThreads; ++t) {
+        double ms = timePerThread[t] / 1000.0;
+        cout << " Thread " << t << ": " << countPerThread[t]
+             << " lotes, tiempo total " << ms << " ms (" << timePerThread[t] << " µs)\n";
+    }
+
+
+    // Opción para ver el log o no en pantalla
+    string verLog;
+
+    while (true) {
+        cout << "Ingrese '1' si desea ver el LOG en pantalla ('0' para cancelar): ";
+        cin >> verLog;
+        if (verLog == "0") { 
+            cout << "Operación cancelada por el usuario.\n"; 
+            break; 
+        }
+        if (verLog == "1") {
+            // impresión secuencial en el hilo principal (sin concurrencia)
+            for (int t = 0; t < useThreads; ++t) {
+                cout << threadOutputs[t];
+            }
+            break;
+        }
+
+        cerr << "Error: debe ingresar '1' o '0'\n";
+    }
 
     // espera para salir (comportamiento previo)
-    string salida;
     cout << "Presione Enter para volver...\n";
-    std::getline(cin, salida);
+    // descartar resto de la línea previa (si lo hay) antes de usar getline
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+    getline(cin, salida);
+
     return;
 }
 
