@@ -141,9 +141,7 @@ int main(int argc, char** argv) {
                     break;
                 case 3:
                     limpiarConsola();
-                    cout << "Juego (en construcción)\n";
-                    cout << "\n(Enter para volver)";
-                    cin.get();
+                    pantallaJuego();
                     break;
                 case 4:
                     pantallaPalindromo();

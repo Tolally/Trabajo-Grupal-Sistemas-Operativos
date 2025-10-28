@@ -1,6 +1,8 @@
 #include "../include/interface.h"
 #include "../include/texto.h"
 #include "../include/matematicas.h"
+#include <iostream>
+
 
 namespace {
     // Lee un entero de forma segura desde stdin con validación básica.
@@ -282,6 +284,108 @@ void multiplicarMatrices(){
 bool verificarRutaMatriz(string& rutaMatriz){
     struct stat buffer;
     return (stat(rutaMatriz.c_str(), &buffer) == 0);
+}
+
+// Función para mostrar la pantalla del juego en el menú
+void pantallaJuego() {
+    limpiarConsola();
+    cout << "=== JUEGO MULTIPLAYER ===" << endl;
+    cout << "1) Iniciar Servidor" << endl;
+    cout << "2) Conectar como Cliente" << endl;
+    cout << "3) Volver al Menú Principal" << endl;
+    cout << "\nOpción: ";
+    
+    int opcion;
+    cin >> opcion;
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    
+    switch (opcion) {
+        case 1:
+            iniciarServidorJuego();
+            break;
+        case 2:
+            iniciarClienteJuego();
+            break;
+        case 3:
+            // Simplemente volver
+            break;
+        default:
+            cout << "Opción inválida." << endl;
+            cout << "\n(Enter para volver)";
+            cin.get();
+            break;
+    }
+}
+
+// Función para iniciar el servidor del juego
+void iniciarServidorJuego() {
+    limpiarConsola();
+    cout << "=== INICIANDO SERVIDOR DEL JUEGO ===" << endl;
+    
+    // Cargar configuración desde .env
+    const char* port_env = getenv("GAME_PORT");
+    const char* board_env = getenv("GAME_BOARD_SIZE");
+    const char* dice_env = getenv("DICE_SIDES");
+    
+    int port = port_env ? stoi(port_env) : 8080;
+    int board_size = board_env ? stoi(board_env) : 50;
+    int dice_sides = dice_env ? stoi(dice_env) : 6;
+    
+    cout << "Configuración:" << endl;
+    cout << " - Puerto: " << port << endl;
+    cout << " - Tamaño del tablero: " << board_size << endl;
+    cout << " - Caras del dado: " << dice_sides << endl;
+    cout << "\nEl servidor se está iniciando..." << endl;
+    cout << "Presiona Ctrl+C para detener el servidor" << endl;
+    cout << "=====================================" << endl;
+    
+    // Ejecutar el servidor en un proceso separado
+    const char* server_bin = getenv("GAME_SERVER");
+    if (!server_bin) {
+        server_bin = "bin/server";
+    }
+    
+    int result = system(server_bin);
+    if (result != 0) {
+        cout << "Error al iniciar el servidor. Asegúrate de que el binario 'server' existe." << endl;
+    }
+    
+    cout << "\n(Enter para volver)";
+    cin.get();
+}
+
+// Función para iniciar el cliente del juego
+void iniciarClienteJuego() {
+    limpiarConsola();
+    cout << "=== CONECTAR COMO CLIENTE ===" << endl;
+    
+    string host, port_str, username;
+    
+    cout << "Host del servidor [127.0.0.1]: ";
+    getline(cin, host);
+    if (host.empty()) host = "127.0.0.1";
+    
+    cout << "Puerto [8080]: ";
+    getline(cin, port_str);
+    if (port_str.empty()) port_str = "8080";
+    
+    cout << "Nombre de usuario: ";
+    getline(cin, username);
+    if (username.empty()) username = "Jugador";
+    
+    cout << "\nConectando a " << host << ":" << port_str << " como " << username << "..." << endl;
+    cout << "=====================================" << endl;
+    
+    // Construir comando para ejecutar el cliente
+    string comando = "bin/client " + host + " " + port_str + " " + username;
+    
+    int result = system(comando.c_str());
+    if (result != 0) {
+        cout << "Error al conectar. Verifica que el servidor esté ejecutándose." << endl;
+    }
+    
+    cout << "\n(Enter para volver)";
+    cin.get();
 }
 
 void limpiarConsola(){

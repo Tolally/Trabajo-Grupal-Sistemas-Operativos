@@ -1,5 +1,5 @@
 CC := g++
-CFLAGS := -std=c++17 -Wall -Wextra -O2
+CFLAGS := -std=c++17 -Wall -Wextra -O2 -pthread
 
 INC := -Iinclude
 
@@ -29,7 +29,18 @@ CREATE_INDEX_BIN := $(BIN_DIR)/create_index
 CREATE_INDEX_PAR_SRC := $(SRC_DIR)/create_index_parallel.cpp
 CREATE_INDEX_PAR_BIN := $(BIN_DIR)/create_index_parallel
 
-all: $(PGM_BIN) $(MULTI_BIN) $(CREATE_INDEX_BIN) $(CREATE_INDEX_PAR_BIN)
+SERVER_SRCS := \
+    $(SRC_DIR)/server_main.cpp \
+    $(SRC_DIR)/game.cpp
+SERVER_OBJS := $(SERVER_SRCS:$(SRC_DIR)/%.cpp=$(BIN_DIR)/%.o)
+
+CLIENT_SRCS := $(SRC_DIR)/client_main.cpp
+CLIENT_OBJS := $(CLIENT_SRCS:$(SRC_DIR)/%.cpp=$(BIN_DIR)/%.o)
+
+SERVER_BIN := $(BIN_DIR)/server
+CLIENT_BIN := $(BIN_DIR)/client
+
+all: $(PGM_BIN) $(MULTI_BIN) $(CREATE_INDEX_BIN) $(CREATE_INDEX_PAR_BIN) $(SERVER_BIN) $(CLIENT_BIN)
 
 $(CREATE_INDEX_BIN): $(CREATE_INDEX_SRC) | $(BIN_DIR)
 	$(CC) $(CFLAGS) $(CREATE_INDEX_SRC) -o $@
@@ -49,6 +60,12 @@ $(PGM_BIN): $(PGM_OBJS)
 $(MULTI_BIN): $(MULTI_OBJS)
 	$(CC) $(CFLAGS) $(MULTI_OBJS) -o $@
 
+$(SERVER_BIN): $(SERVER_OBJS)
+	$(CC) $(CFLAGS) $(SERVER_OBJS) -o $@
+
+$(CLIENT_BIN): $(CLIENT_OBJS)
+	$(CC) $(CFLAGS) $(CLIENT_OBJS) -o $@
+
 run: $(PGM_BIN)
 	@# Carga variables de entorno desde ../.env (raíz) y ejecuta el binario desde la raíz del repo
 	@if [ -f ../.env ]; then set -a; . ../.env; set +a; fi; \
@@ -60,4 +77,4 @@ run-multi: $(MULTI_BIN)
 	$(MULTI_BIN) "$$A" "$$B" "$$SEP"
 
 clean:
-	rm -f $(BIN_DIR)/*.o $(PGM_BIN) $(MULTI_BIN) $(CREATE_INDEX_BIN) $(CREATE_INDEX_PAR_BIN)
+	rm -f $(BIN_DIR)/*.o $(PGM_BIN) $(MULTI_BIN) $(CREATE_INDEX_BIN) $(CREATE_INDEX_PAR_BIN) $(SERVER_BIN) $(CLIENT_BIN)

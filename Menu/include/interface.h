@@ -32,5 +32,10 @@ void multiplicarMatrices();
 // Verifica que la ruta de la matriz ingresada existe.
 bool verificarRutaMatriz(string& rutaMatriz);
 
+// Funciones juego multiplayer
+void pantallaJuego();
+void iniciarServidorJuego();
+void iniciarClienteJuego();
+
 // Limpia la consola usando el comando del sistema según plataforma.
 void limpiarConsola();
