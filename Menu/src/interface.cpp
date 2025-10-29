@@ -365,9 +365,9 @@ void iniciarClienteJuego() {
     getline(cin, host);
     if (host.empty()) host = "127.0.0.1";
     
-    cout << "Puerto [8080]: ";
+    cout << "Puerto [9000]: ";
     getline(cin, port_str);
-    if (port_str.empty()) port_str = "8080";
+    if (port_str.empty()) port_str = "9000";
     
     cout << "Nombre de usuario: ";
     getline(cin, username);
