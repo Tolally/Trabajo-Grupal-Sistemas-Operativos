@@ -42,6 +42,30 @@ void load_env_variables() {
     }
 }
 
+string get_timestamp() {
+    auto now = chrono::system_clock::now();
+    auto time = chrono::system_clock::to_time_t(now);
+    stringstream ss;
+    ss << put_time(localtime(&time), "%H:%M:%S");
+    return ss.str();
+}
+
+void log_info(const string& msg) {
+    cerr << "[" << get_timestamp() << "] ℹ️  " << msg << endl;
+}
+
+void log_event(const string& msg) {
+    cerr << "[" << get_timestamp() << "] 📋 " << msg << endl;
+}
+
+void log_game(const string& msg) {
+    cerr << "[" << get_timestamp() << "] 🎮 " << msg << endl;
+}
+
+void log_error(const string& msg) {
+    cerr << "[" << get_timestamp() << "] ⚠️  " << msg << endl;
+}
+
 bool send_line_raw(int sock, const string& s) {
     lock_guard<mutex> lk(send_mtx);
     string data = s + "\n";
@@ -108,12 +132,23 @@ void send_to_other_teams(const string& excludedTeam, const string& msg) {
 
 void broadcast_scores_to_all() {
     string scores_display = G->build_scores_display();
-    broadcast_msg(make_msg2("SCORES", scores_display));
+    log_game("Enviando puntuaciones a todos los jugadores:");
+    cerr << scores_display << endl;
+    
+    // IMPORTANTE: Codificar los saltos de línea como un marcador especial
+    string encoded = scores_display;
+    size_t pos = 0;
+    while ((pos = encoded.find('\n', pos)) != string::npos) {
+        encoded.replace(pos, 1, "\\n");  // Reemplazar \n con \\n (dos caracteres)
+        pos += 2;
+    }
+    
+    broadcast_msg(make_msg2("SCORES", encoded));
 }
 
 void broadcast_board_update() {
     string board_display = G->build_board_display();
-    cerr << board_display << endl;
+    cerr << endl << board_display << endl;
 }
 
 void handle_turn_notification() {
@@ -123,20 +158,30 @@ void handle_turn_notification() {
     string currentTeam = G->get_player_team(currentId);
     string currentPlayerName = G->get_player_name(currentId);
     
-    cerr << "[TURNO] " << currentPlayerName << " del equipo " << currentTeam << endl;
+    log_game("Turno de " + currentPlayerName + " (Equipo " + currentTeam + ")");
     
     send_to_id(currentId, make_msg2("YOURTURN", "¡ES TU TURNO! Escribe 'r' para lanzar el dado"));
     
     send_to_team_except(currentTeam, currentId, 
         make_msg2("TURN_INFO", "Es el turno de tu compañero " + currentPlayerName));
     
-    send_to_other_teams(currentTeam, make_msg2("TURN_INFO", "Es el turno del equipo " + currentTeam));
+    send_to_other_teams(currentTeam, 
+        make_msg2("TURN_INFO", "Es el turno del equipo " + currentTeam));
 }
 
 void handle_client(int client_sock) {
     int myId = -1;
     string myTeam = "";
+    string myName = "";
     string line;
+    
+    // Log de nueva conexión
+    sockaddr_in addr;
+    socklen_t addr_len = sizeof(addr);
+    getpeername(client_sock, (struct sockaddr*)&addr, &addr_len);
+    char ip[INET_ADDRSTRLEN];
+    inet_ntop(AF_INET, &addr.sin_addr, ip, INET_ADDRSTRLEN);
+    log_info("Nueva conexión desde " + string(ip) + ":" + to_string(ntohs(addr.sin_port)));
     
     while (recv_line_raw(client_sock, line)) {
         vector<string> parts;
@@ -152,18 +197,29 @@ void handle_client(int client_sock) {
         if (cmd == "JOIN") {
             string name = (parts.size() > 1 ? parts[1] : string("user"));
             myId = G->add_player(client_sock, name);
+            myName = name;
+            
             {
                 lock_guard<mutex> lk(sock_mtx);
                 id_to_sock[myId] = client_sock;
             }
             
+            log_event("Jugador '" + name + "' conectado (ID: " + to_string(myId) + ")");
+            
             send_line_raw(client_sock, make_msg2("WELCOME", to_string(myId)));
+            
+            // Pequeño delay antes de enviar LOBBY a TODOS
+            this_thread::sleep_for(chrono::milliseconds(100));
             broadcast_msg(make_msg2("LOBBY", G->build_player_list_csv()));
             
+            // Si el juego ya está corriendo, enviar estado actual
             if (G->is_running()) {
+                this_thread::sleep_for(chrono::milliseconds(100));
                 auto cfg = G->get_config();
                 send_line_raw(client_sock, make_msg3("START", to_string(cfg.boardSize), to_string(cfg.diceSides)));
+                this_thread::sleep_for(chrono::milliseconds(100));
                 broadcast_scores_to_all();
+                this_thread::sleep_for(chrono::milliseconds(100));
                 handle_turn_notification();
             }
             
@@ -173,6 +229,7 @@ void handle_client(int client_sock) {
         if (cmd == "READY") {
             if (parts.size() < 2) { 
                 send_line_raw(client_sock, make_msg2("ERROR","Falta nombre del equipo")); 
+                log_error("Jugador " + to_string(myId) + " intentó marcarse listo sin equipo");
                 continue; 
             }
             string teamName = parts[1];
@@ -188,14 +245,33 @@ void handle_client(int client_sock) {
                 myTeam = teamName;
             }
             
+            log_event("Jugador '" + myName + "' (ID: " + to_string(myId) + ") se unió al equipo '" + teamName + "'");
+            
+            // Enviar LOBBY actualizado a TODOS
+            this_thread::sleep_for(chrono::milliseconds(100));
             broadcast_msg(make_msg2("LOBBY", G->build_player_list_csv()));
             
+            // Intentar iniciar el juego
+            bool wasRunning = G->is_running();
             G->start_game_if_ready();
-            if (G->is_running()) {
+            
+            if (G->is_running() && !wasRunning) {
+                log_game("¡JUEGO INICIADO!");
                 auto cfg = G->get_config();
+                log_game("Meta: " + to_string(cfg.boardSize) + " puntos | Dado: " + to_string(cfg.diceSides) + " caras");
+                
+                // Enviar mensajes de inicio con delays
+                this_thread::sleep_for(chrono::milliseconds(150));
                 broadcast_msg(make_msg3("START", to_string(cfg.boardSize), to_string(cfg.diceSides)));
+                
+                // IMPORTANTE: Enviar puntuaciones iniciales
+                this_thread::sleep_for(chrono::milliseconds(150));
                 broadcast_scores_to_all();
+                
+                this_thread::sleep_for(chrono::milliseconds(150));
                 broadcast_board_update();
+                
+                this_thread::sleep_for(chrono::milliseconds(150));
                 handle_turn_notification();
             }
             continue;
@@ -207,16 +283,19 @@ void handle_client(int client_sock) {
                 continue; 
             }
             
+            log_game("Jugador '" + myName + "' lanza el dado...");
             broadcast_msg(make_msg("ROLLING"));
-            this_thread::sleep_for(chrono::seconds(1));
+            this_thread::sleep_for(chrono::milliseconds(800));
             
             auto pr = G->handle_roll(myId);
             
             if (pr.first == GameResult::NOT_RUNNING) {
                 send_line_raw(client_sock, make_msg2("ERROR","El juego no está en ejecución"));
+                log_error("Intento de tirada cuando el juego no está corriendo");
                 continue;
             } else if (pr.first == GameResult::NOT_YOUR_TURN) {
                 send_line_raw(client_sock, make_msg2("ERROR","No es tu turno"));
+                log_error("Jugador '" + myName + "' intentó jugar fuera de turno");
                 continue;
             } else if (pr.first == GameResult::PLAYER_DISCONNECTED) {
                 send_line_raw(client_sock, make_msg2("ERROR","Jugador desconectado"));
@@ -226,25 +305,38 @@ void handle_client(int client_sock) {
                 string teamName = G->get_player_team(myId);
                 int diceValue = pr.second;
                 
-                // Enviar resultados primero
+                log_game("Jugador '" + playerName + "' sacó " + to_string(diceValue) + " puntos");
+                
+                // Enviar resultados con delays
                 send_to_id(myId, make_msg2("ROLL_RESULT", "¡Sacaste " + to_string(diceValue) + " puntos!"));
+                this_thread::sleep_for(chrono::milliseconds(100));
+                
                 send_to_team_except(teamName, myId, 
                     make_msg2("ROLL_RESULT", playerName + " sacó " + to_string(diceValue) + " puntos"));
+                this_thread::sleep_for(chrono::milliseconds(100));
+                
                 send_to_other_teams(teamName, 
                     make_msg2("ROLL_RESULT", "Equipo " + teamName + " sacó " + to_string(diceValue) + " puntos"));
                 
-                // Luego enviar puntuaciones
+                // Enviar puntuaciones actualizadas
+                this_thread::sleep_for(chrono::milliseconds(300));
                 broadcast_scores_to_all();
                 broadcast_board_update();
                 
+                // Verificar fin del juego
                 if (!G->is_running()) {
                     string winner = G->get_winner();
+                    log_game("¡JUEGO TERMINADO! Ganador: Equipo " + winner);
+                    
+                    this_thread::sleep_for(chrono::milliseconds(500));
                     broadcast_msg(make_msg2("END", "¡Equipo " + winner + " gana!"));
                     G->reset_after_game();
+                    
+                    this_thread::sleep_for(chrono::milliseconds(100));
                     broadcast_msg(make_msg2("LOBBY", G->build_player_list_csv()));
                 } else {
-                    // Pequeño delay para asegurar procesamiento
-                    this_thread::sleep_for(chrono::milliseconds(50));
+                    // Siguiente turno
+                    this_thread::sleep_for(chrono::milliseconds(300));
                     handle_turn_notification();
                 }
             }
@@ -252,13 +344,18 @@ void handle_client(int client_sock) {
         }
 
         if (cmd == "QUIT") {
+            log_info("Jugador '" + myName + "' (ID: " + to_string(myId) + ") se desconectó voluntariamente");
             break;
         }
 
         send_line_raw(client_sock, make_msg2("ERROR","Comando desconocido"));
+        log_error("Comando desconocido recibido de jugador " + to_string(myId) + ": " + cmd);
     }
 
+    // Manejo de desconexión
     if (myId != -1) {
+        log_info("Jugador '" + myName + "' (ID: " + to_string(myId) + ") desconectado");
+        
         G->mark_player_disconnected(myId);
         {
             lock_guard<mutex> lk(sock_mtx);
@@ -269,12 +366,19 @@ void handle_client(int client_sock) {
         if (G->is_running()) {
             string playerName = G->get_player_name(myId);
             string teamName = G->get_player_team(myId);
+            
+            log_game("Jugador '" + playerName + "' del equipo " + teamName + " abandonó la partida");
             broadcast_msg(make_msg2("PLAYER_LEFT", playerName + "|" + teamName));
+            
+            this_thread::sleep_for(chrono::milliseconds(100));
             broadcast_scores_to_all();
             
+            // Si era su turno, avanzar
             int currentPlayer = G->current_player_id();
             if (currentPlayer == myId) {
+                log_game("Era el turno del jugador desconectado, avanzando...");
                 auto pr = G->handle_roll(myId);
+                this_thread::sleep_for(chrono::milliseconds(100));
                 handle_turn_notification();
             }
         }
@@ -296,13 +400,17 @@ int main(int argc, char** argv) {
     if ((v = getenv("MAX_TEAMS"))) cfg.maxTeams = stoi(v);
     if ((v = getenv("GAME_PORT"))) cfg.port = stoi(v);
 
+    cerr << endl;
     cerr << "╔══════════════════════════════════════╗" << endl;
-    cerr << "║           SERVIDOR INICIADO          ║" << endl;
+    cerr << "║      🎮 SERVIDOR DE JUEGO 🎮         ║" << endl;
     cerr << "╠══════════════════════════════════════╣" << endl;
-    cerr << "║ Tablero: " << setw(3) << cfg.boardSize << " posiciones" << setw(18) << "║" << endl;
-    cerr << "║ Dado: " << setw(2) << cfg.diceSides << " caras" << setw(25) << "║" << endl;
-    cerr << "║ Puerto: " << setw(4) << cfg.port << setw(24) << "║" << endl;
+    cerr << "║ Tablero:  " << setw(3) << cfg.boardSize << " posiciones" << setw(15) << "║" << endl;
+    cerr << "║ Dado:     " << setw(2) << cfg.diceSides << " caras" << setw(22) << "║" << endl;
+    cerr << "║ Puerto:   " << setw(4) << cfg.port << setw(25) << "║" << endl;
+    cerr << "║ Min equipos: " << cfg.minTeams << setw(23) << "║" << endl;
+    cerr << "║ Min jugadores/equipo: " << cfg.minPlayersPerTeam << setw(13) << "║" << endl;
     cerr << "╚══════════════════════════════════════╝" << endl;
+    cerr << endl;
 
     G = new Game(cfg);
 
@@ -323,13 +431,17 @@ int main(int argc, char** argv) {
     
     if (listen(server_fd, 16) < 0) { perror("listen"); return 1; }
     
-    cerr << "⏳ Esperando conexiones..." << endl;
+    log_info("Servidor iniciado. Esperando conexiones...");
+    cerr << endl;
 
     while (true) {
         sockaddr_in client_addr;
         socklen_t addrlen = sizeof(client_addr);
         int new_socket = accept(server_fd, (struct sockaddr*)&client_addr, &addrlen);
-        if (new_socket < 0) { perror("accept"); continue; }
+        if (new_socket < 0) { 
+            perror("accept"); 
+            continue; 
+        }
         
         thread t(handle_client, new_socket);
         t.detach();

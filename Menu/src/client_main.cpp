@@ -20,7 +20,16 @@ using namespace std;
 atomic<bool> running(true);
 atomic<bool> myTurn(false);
 mutex cout_m;
+mutex state_m;
+
+// Estado de la interfaz
 string myTeam = "";
+string username = "";
+string currentScores = "";
+string currentTurnInfo = "";
+string lastRollInfo = "";  // Guardar info del último roll
+string lobbyInfo = "";
+bool gameStarted = false;
 
 bool send_line(int sock, const string& s) {
     string out = s + "\n";
@@ -48,29 +57,65 @@ bool recv_line(int sock, string& out) {
 }
 
 void clear_screen() {
-    cout << "\033[2J\033[1;1H";
+    // Usar el comando del sistema operativo para limpiar
+    #ifdef _WIN32
+        system("cls");
+    #else
+        system("clear");
+    #endif
 }
 
-void show_header(const string& username) {
+void redraw_interface() {
+    clear_screen();
+    
+    // Header
     cout << "╔══════════════════════════════════════╗" << endl;
-    cout << "║           JUEGO MULTIPLAYER          ║" << endl;
+    cout << "║       🎮 JUEGO MULTIPLAYER 🎮        ║" << endl;
     cout << "╠══════════════════════════════════════╣" << endl;
-    cout << "║ Jugador: " << username;
+    cout << "║ Jugador: " << left << setw(26) << username << "║" << endl;
+    
     if (!myTeam.empty()) {
-        cout << " [" << myTeam << "]";
+        cout << "║ Equipo: " << left << setw(27) << myTeam << "║" << endl;
     }
     
-    int total_length = username.length();
-    if (!myTeam.empty()) {
-        total_length += myTeam.length() + 3;
-    }
-    int padding = 34 - total_length;
-    
-    cout << setw(padding) << "║" << endl;
     cout << "╚══════════════════════════════════════╝" << endl;
+    cout << endl;
+    
+    // Mostrar información del lobby si NO estamos en juego
+    if (!gameStarted && !lobbyInfo.empty()) {
+        cout << "👥 Sala: " << lobbyInfo << endl << endl;
+    }
+    // Mostrar puntuaciones si el juego ha iniciado
+    if (gameStarted && !currentScores.empty()) {
+        cout << currentScores << endl;
+    } else if (gameStarted) {
+        cerr << "[DEBUG redraw] gameStarted=true pero currentScores está vacío!" << endl;
+    }
+    
+    // Mostrar información del último roll
+    if (!lastRollInfo.empty()) {
+        cout << lastRollInfo << endl << endl;
+    }
+    
+    // Mostrar información del turno
+    if (!currentTurnInfo.empty()) {
+        cout << currentTurnInfo << endl << endl;
+    }
+    
+    // Prompt
+    if (myTurn) {
+        cout << "🎲 ¡ES TU TURNO!" << endl;
+        cout << ">>> Escribe 'r' para lanzar > ";
+    } else if (gameStarted) {
+        cout << ">>> Esperando... > ";
+    } else {
+        cout << ">>> Comandos: 'ready <equipo>' | 'quit' > ";
+    }
+    
+    cout.flush();
 }
 
-void reader_thread_func(int sock, const string& username) {
+void reader_thread_func(int sock) {
     string line;
     while (recv_line(sock, line)) {
         vector<string> parts;
@@ -82,80 +127,145 @@ void reader_thread_func(int sock, const string& username) {
         if (!cur.empty()) parts.push_back(cur);
         string type = parts.size()>0?parts[0]:"";
         
-        lock_guard<mutex> lk(cout_m);
-        clear_screen();
-        show_header(username);
+        bool shouldRedraw = false;
         
-        if (type == "YOURTURN") {
-            myTurn = true;
-            string message = parts.size()>1?parts[1]:"";
-            cout << endl << " " << message << endl;
-        } 
-        else if (type == "ROLLING") {
-            cout << endl << " Lanzando el dado";
-            for (int i = 0; i < 3; i++) {
-                cout << ".";
-                cout.flush();
-                this_thread::sleep_for(chrono::milliseconds(300));
+        {
+            lock_guard<mutex> lk(state_m);
+            
+            if (type == "WELCOME") {
+                lobbyInfo = "Conectado al servidor";
+                shouldRedraw = true;
+            } 
+            else if (type == "LOBBY") {
+                // SIEMPRE actualizar lobby info
+                if (parts.size() > 1) {
+                    lobbyInfo = parts[1];
+                    // Solo redibujar si NO estamos en juego
+                    if (!gameStarted) {
+                        shouldRedraw = true;
+                    }
+                }
             }
-            cout << endl;
-        } 
-        else if (type == "ROLL_RESULT") {
-            string result = parts.size()>1?parts[1]:"";
-            cout << endl << " " << result << endl;
-        } 
-        else if (type == "SCORES") {
-            if (parts.size() > 1) {
-                cout << endl << parts[1] << endl;
+            else if (type == "START") {
+                gameStarted = true;
+                currentTurnInfo = "🎉 ¡JUEGO INICIADO!";
+                if (parts.size() > 1) {
+                    currentTurnInfo += "\n   Meta: " + parts[1] + " puntos";
+                }
+                if (parts.size() > 2) {
+                    currentTurnInfo += " | Dado: " + parts[2] + " caras";
+                }
+                lastRollInfo = "";
+                shouldRedraw = true;
             }
-        } 
-        else if (type == "START") {
-            cout << endl << "¡JUEGO INICIADO!" << endl;
-            if (parts.size() > 1) {
-                cout << "Meta: " << parts[1] << " puntos" << endl;
+            else if (type == "SCORES") {
+                if (parts.size() > 1) {
+                    string rawScores = parts[1];
+                    
+                    // IMPORTANTE: Decodificar los saltos de línea
+                    size_t pos = 0;
+                    while ((pos = rawScores.find("\\n", pos)) != string::npos) {
+                        rawScores.replace(pos, 2, "\n");  // Reemplazar \\n con \n real
+                        pos += 1;
+                    }
+                    
+                    // Procesar las puntuaciones y marcar "tu equipo"
+                    stringstream ss(rawScores);
+                    stringstream output;
+                    string line;
+                    
+                    while (getline(ss, line)) {
+                        if (line.empty()) {
+                            output << line << "\n";
+                            continue;
+                        }
+                        
+                        // Si la línea contiene nuestro equipo, agregar "(tu equipo)"
+                        if (!myTeam.empty() && line.find("Equipo " + myTeam) != string::npos) {
+                            size_t pos = line.find(":");
+                            if (pos != string::npos) {
+                                output << line.substr(0, pos) << " (tu equipo)" << line.substr(pos) << "\n";
+                            } else {
+                                output << line << "\n";
+                            }
+                        } else {
+                            output << line << "\n";
+                        }
+                    }
+                    
+                    currentScores = output.str();
+                    cerr << "[DEBUG] currentScores guardado, longitud: " << currentScores.length() << endl;
+                    shouldRedraw = true;
+                } else {
+                    cerr << "[DEBUG] SCORES sin contenido (parts.size = " << parts.size() << ")" << endl;
+                }
             }
-            if (parts.size() > 2) {
-                cout << "Dado: " << parts[2] << " caras" << endl;
+            else if (type == "YOURTURN") {
+                myTurn = true;
+                currentTurnInfo = "🎯 ¡Tu turno de jugar!";
+                shouldRedraw = true;
+            } 
+            else if (type == "TURN_INFO") {
+                myTurn = false;
+                string turnInfo = parts.size()>1?parts[1]:"";
+                shouldRedraw = true;
             }
-        } 
-        else if (type == "END") {
-            cout << endl << "¡JUEGO TERMINADO!" << endl;
-            cout << "Ganador: " << (parts.size()>1?parts[1]:"") << endl;
-            running = false;
-            break;
-        } 
-        else if (type == "LOBBY") {
-            cout << endl << " Sala: " << (parts.size()>1?parts[1]:"") << endl;
-        } 
-        else if (type == "WELCOME") {
-            cout << endl << " Conectado al servidor" << endl;
-        } 
-        else if (type == "TURN_INFO") {
-            string turnInfo = parts.size()>1?parts[1]:"";
-            cout << endl << "" << turnInfo << endl;
-        } 
-        else if (type == "PLAYER_LEFT") {
-            string info = parts.size()>1?parts[1]:"";
-            size_t sep_pos = info.find('|');
-            if (sep_pos != string::npos) {
-                string playerName = info.substr(0, sep_pos);
-                string teamName = info.substr(sep_pos + 1);
-                cout << endl << " " << playerName << " del equipo " << teamName << " se desconectó" << endl;
+            else if (type == "ROLLING") {
+                currentTurnInfo = "🎲 Lanzando el dado...";
+                shouldRedraw = true;
+            } 
+            else if (type == "ROLL_RESULT") {
+                string result = parts.size()>1?parts[1]:"";
+                
+                // Guardar el resultado del roll
+                if (result.find("Sacaste") != string::npos) {
+                    // Es nuestro resultado
+                    lastRollInfo = "📊 Último turno: " + result;
+                } else if (result.find("sacó") != string::npos) {
+                    // Es resultado de otro jugador/equipo
+                    lastRollInfo = "📊 " + result;
+                }
+                
+                myTurn = false;
+                currentTurnInfo = "";
+                shouldRedraw = true;
+            } 
+            else if (type == "END") {
+                gameStarted = false;
+                myTurn = false;
+                currentTurnInfo = "🏆 ¡JUEGO TERMINADO!\n   Ganador: " + (parts.size()>1?parts[1]:"");
+                currentScores = "";
+                lastRollInfo = "";
+                shouldRedraw = true;
+                
+                // Mostrar resultado y salir
+                lock_guard<mutex> lk_cout(cout_m);
+                redraw_interface();
+                this_thread::sleep_for(chrono::seconds(3));
+                running = false;
+                return;
+            } 
+            else if (type == "PLAYER_LEFT") {
+                string info = parts.size()>1?parts[1]:"";
+                size_t sep_pos = info.find('|');
+                if (sep_pos != string::npos) {
+                    string playerName = info.substr(0, sep_pos);
+                    string teamName = info.substr(sep_pos + 1);
+                    currentTurnInfo = "❌ " + playerName + " del equipo " + teamName + " se desconectó";
+                    shouldRedraw = true;
+                }
+            } 
+            else if (type == "ERROR") {
+                currentTurnInfo = "⚠️  Error: " + (parts.size()>1?parts[1]:"");
+                shouldRedraw = true;
             }
-        } 
-        else if (type == "ERROR") {
-            cout << endl << " Error: " << (parts.size()>1?parts[1]:"") << endl;
-        } 
-        else {
-            cout << "[MSG] " << line << endl;
         }
         
-        if (myTurn) {
-            cout << endl << ">>> Escribe 'r' para lanzar el dado > ";
-        } else {
-            cout << endl << ">>> Comandos: 'ready <equipo>' | 'quit' > ";
+        // Redibujar si es necesario
+        if (shouldRedraw) {
+            lock_guard<mutex> lk_cout(cout_m);
+            redraw_interface();
         }
-        cout.flush();
     }
     running = false;
 }
@@ -168,7 +278,7 @@ int main(int argc, char** argv) {
     
     string host = argv[1];
     int port = stoi(argv[2]);
-    string username = argv[3];
+    username = argv[3];
 
     int sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock < 0) { perror("socket"); return 1; }
@@ -188,8 +298,17 @@ int main(int argc, char** argv) {
     }
 
     cout << "Conectando al servidor..." << endl;
-    thread reader(reader_thread_func, sock, username);
+    
     send_line(sock, make_msg2("JOIN", username));
+    
+    thread reader(reader_thread_func, sock);
+    
+    // Pequeño delay para recibir el WELCOME
+    this_thread::sleep_for(chrono::milliseconds(300));
+    {
+        lock_guard<mutex> lk(cout_m);
+        redraw_interface();
+    }
 
     while (running) {
         string line;
@@ -200,23 +319,31 @@ int main(int argc, char** argv) {
             while (!s.empty() && isspace((unsigned char)s.back())) s.pop_back();
         };
         trim(line);
-        if (line.empty()) continue;
+        if (line.empty()) {
+            lock_guard<mutex> lk(cout_m);
+            redraw_interface();
+            continue;
+        }
 
         if (myTurn) {
             char c = tolower((unsigned char)line[0]);
             if (c == 'r') {
                 if (!send_line(sock, make_msg("ROLL"))) {
-                    cerr << "Error enviando ROLL" << endl;
+                    lock_guard<mutex> lk(state_m);
+                    currentTurnInfo = "⚠️  Error enviando ROLL";
                     running = false;
                     break;
                 }
-                myTurn = false;
+                // No redibujar aquí, esperar respuesta del servidor
             } else if (c == 'q') {
                 send_line(sock, make_msg("QUIT"));
-                myTurn = false;
+                running = false;
+                break;
             } else {
-                lock_guard<mutex> lk(cout_m);
-                cout << "Comando no reconocido. Usa 'r' para lanzar" << endl;
+                lock_guard<mutex> lk_state(state_m);
+                lock_guard<mutex> lk_cout(cout_m);
+                currentTurnInfo = "⚠️  Comando no reconocido. Usa 'r' para lanzar";
+                redraw_interface();
             }
         } else {
             stringstream ss(line);
@@ -226,22 +353,44 @@ int main(int argc, char** argv) {
             if (cmd == "ready") {
                 string team; 
                 ss >> team;
-                if (team.empty()) team = "Equipo" + to_string(rand() % 1000);
-                myTeam = team;
+                if (team.empty()) {
+                    lock_guard<mutex> lk_state(state_m);
+                    lock_guard<mutex> lk_cout(cout_m);
+                    currentTurnInfo = "⚠️  Debes especificar un nombre de equipo";
+                    redraw_interface();
+                    continue;
+                }
+                
+                {
+                    lock_guard<mutex> lk(state_m);
+                    myTeam = team;
+                    lobbyInfo = "Uniéndose al equipo " + team + "...";
+                }
+                
                 send_line(sock, make_msg2("READY", team));
+                
+                // Redibujar para mostrar el cambio
+                this_thread::sleep_for(chrono::milliseconds(50));
+                lock_guard<mutex> lk(cout_m);
+                redraw_interface();
+                
             } else if (cmd == "quit") {
                 send_line(sock, make_msg("QUIT"));
                 running = false;
                 break;
             } else {
-                lock_guard<mutex> lk(cout_m);
-                cout << "Comando no reconocido. Usa 'ready <equipo>' o 'quit'" << endl;
+                lock_guard<mutex> lk_state(state_m);
+                lock_guard<mutex> lk_cout(cout_m);
+                currentTurnInfo = "⚠️  Comando no reconocido. Usa 'ready <equipo>' o 'quit'";
+                redraw_interface();
             }
         }
     }
 
     close(sock);
     if (reader.joinable()) reader.join();
-    cout << "Cliente finalizado" << endl;
+    
+    clear_screen();
+    cout << "👋 Cliente finalizado" << endl;
     return 0;
 }

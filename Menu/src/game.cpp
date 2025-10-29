@@ -23,6 +23,7 @@ int Game::add_player(int sock, const std::string& name) {
     p.sock = sock; 
     p.name = name;
     p.connected = true;
+    p.ready = false;  // IMPORTANTE: Por defecto NO está listo
     players[id] = p;
     return id;
 }
@@ -83,15 +84,19 @@ void Game::build_play_order_round_robin() {
 bool Game::check_start_conditions() {
     if (running) return false;
 
+    // 1. Verificar que TODOS los jugadores conectados estén listos
+    for (auto &kv : players) {
+        if (kv.second.connected && !kv.second.ready) {
+            return false;  // Hay un jugador conectado que NO está listo
+        }
+    }
+
+    // 2. Verificar que haya suficientes equipos con suficientes jugadores
     int teams_ok = 0;
     for (auto &kv : teams) {
         if ((int)kv.second.members.size() >= cfg.minPlayersPerTeam) ++teams_ok;
     }
     if (teams_ok < cfg.minTeams) return false;
-
-    for (auto &kv : players) {
-        if (!kv.second.ready) return false;
-    }
 
     return true;
 }
@@ -222,11 +227,11 @@ string Game::build_teams_status() {
 
 string Game::build_scores_display() {
     stringstream ss;
-    ss << "\n🏆 PUNTUACIONES ACTUALES 🏆" << endl;
+    ss << "\n PUNTUACIONES ACTUALES " << endl;
     ss << "Meta: " << cfg.boardSize << " puntos" << endl << endl;
     
     for (auto &kv : teams) {
-        string status = is_team_active(kv.first) ? "🏃 ACTIVO" : "💀 ELIMINADO";
+        string status = is_team_active(kv.first) ? " ACTIVO" : " ELIMINADO";
         ss << "Equipo " << kv.first << ": " << kv.second.score << "/" << cfg.boardSize << " puntos - " << status << endl;
     }
     
@@ -234,7 +239,7 @@ string Game::build_scores_display() {
     if (currentId != -1 && running) {
         auto playerIt = players.find(currentId);
         if (playerIt != players.end()) {
-            ss << endl << "📢 Turno actual: " << playerIt->second.name << " (Equipo " << playerIt->second.team << ")" << endl;
+            ss << endl << "⏳ Turno actual: " << playerIt->second.name << " (Equipo " << playerIt->second.team << ")" << endl;
         }
     }
     
