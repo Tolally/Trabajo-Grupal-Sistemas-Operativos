@@ -238,7 +238,11 @@ void handle_client(int client_sock) {
                 continue; 
             }
             
-            G->player_ready(myId, teamName);
+            auto res = G->player_ready(myId, teamName);
+            if (res != GameResult::OK) {
+                send_line_raw(client_sock, make_msg2("ERROR","No puedes cambiar de equipo ahora"));
+                continue;
+            }
             {
                 lock_guard<mutex> lk(sock_mtx);
                 id_to_team[myId] = teamName;

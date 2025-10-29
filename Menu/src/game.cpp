@@ -38,16 +38,31 @@ void Game::remove_player(int id) {
 GameResult Game::player_ready(int id, const std::string& teamName) {
     auto it = players.find(id);
     if (it == players.end()) return GameResult::INVALID_ARG;
-    
+    // No permitir cambios de equipo cuando el juego ya está corriendo
+    if (running) return GameResult::INVALID_ARG;
+
+    // Eliminar al jugador de cualquier equipo previo para evitar duplicados
+    for (auto teamIt = teams.begin(); teamIt != teams.end(); ) {
+        auto &vec = teamIt->second.members;
+        auto pos = std::find(vec.begin(), vec.end(), id);
+        if (pos != vec.end()) vec.erase(pos);
+        // limpiar equipos vacíos para evitar "equipos fantasmas"
+        if (vec.empty()) {
+            teamIt = teams.erase(teamIt);
+        } else {
+            ++teamIt;
+        }
+    }
+
     it->second.ready = true;
     it->second.team = teamName;
-    
+
     auto &t = teams[teamName];
     t.name = teamName;
     if (find(t.members.begin(), t.members.end(), id) == t.members.end()) {
         t.members.push_back(id);
     }
-    
+
     return GameResult::OK;
 }
 
@@ -107,7 +122,7 @@ bool Game::is_team_active(const std::string& teamName) {
     
     for (int playerId : it->second.members) {
         auto playerIt = players.find(playerId);
-        if (playerIt != players.end() && playerIt->second.connected) {
+        if (playerIt != players.end() && playerIt->second.connected && playerIt->second.team == teamName) {
             return true;
         }
     }

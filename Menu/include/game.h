@@ -93,7 +93,7 @@ public:
     void mark_player_disconnected(int id);
     int get_next_active_player();
     int get_team_player_count(const std::string& teamName);
-
+    
 };
 
 #endif

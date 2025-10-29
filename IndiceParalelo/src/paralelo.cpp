@@ -27,21 +27,51 @@ int pedirNumeroThreads(unsigned int maxThreadsH, int nThreadsEnv) {
     else 
         max = nThreadsEnv;
 
-    int value = -1;
-
+    // Leer línea completa y validar que sea un entero puro.
     while (true) {
         cout << "Ingrese la cantidad de threads a usar (1 - " << (max) << ", 0 para cancelar): ";
-        if (!(cin >> value)) {
+        string linea;
+        if (!std::getline(cin, linea)) {
             cin.clear();
-            cin.ignore(numeric_limits<streamsize>::max(), '\n');
             cout << "Entrada inválida. Debe ingresar un número entero.\n";
             continue;
         }
-        cin.ignore(numeric_limits<streamsize>::max(), '\n'); // limpiar resto de la línea
+
+        // trim espacios
+        auto trim = [](string &s){
+            size_t a = s.find_first_not_of(" \t\r\n");
+            size_t b = s.find_last_not_of(" \t\r\n");
+            if (a==string::npos) { s.clear(); return; }
+            s = s.substr(a, b - a + 1);
+        };
+        trim(linea);
+        if (linea.empty()) {
+            cout << "Entrada inválida. Debe ingresar un número entero.\n";
+            continue;
+        }
+
+        // Validar que todos los caracteres sean dígitos
+        bool all_digits = true;
+        for (unsigned char c : linea) {
+            if (!std::isdigit(c)) { all_digits = false; break; }
+        }
+        if (!all_digits) {
+            cout << "Entrada inválida. Debe ingresar un número entero.\n";
+            continue;
+        }
+
+        // Convertir a entero seguro
+        int value = 0;
+        try {
+            value = std::stoi(linea);
+        } catch (...) {
+            cout << "Entrada inválida. Debe ingresar un número entero.\n";
+            continue;
+        }
 
         if (value == 0) 
             return 0; // cancelar
-        if (value > 0 && value <= max)  
+        if (value > 0 && value <= max) 
             return value;
 
         cout << "Debe ingresar un entero mayor que 0 y menor que " << max << ". Intente nuevamente.\n";

@@ -5,24 +5,25 @@
 - Carlos Duarte
 
 # Entregable 3 - Sistemas Operativos - Grupo 4
-## Problema 1 - Trabajo sobre el índice invertido
-Se agrega al menú principal una opción nueva para crear el indice invertido, con la diferencia de que en esta ocasión el proceso se realiza en paralelo.
-Este programa cuenta con las siguientes características:
-- Hilos configurables con `N_THREADS` y procesamiento por lotes `N_LOTE`.
-- Crea el mapa de libros con formato `id; nombre_libro`.
-- El archivo de salida `.idx` utiliza el id del libro en lugar del nombre.
-- Registra log del proceso de esta forma: `id_thread;id_libro;cantidad_palabras;ts_inicio;ts_termino`.
-- Todos estos archivos creados se guardan en `data/indices/`.
-
 Compilar:
 ```
-make -C Menu
+make -C Menu && make -C IndiceParalelo && make -C User_Admin
 ```
 
 Ejecutar (por ejemplo):
 ```
 ./Menu/bin/pgm -u Tolally -p 12345 -f "libros/010 - Alice's Adventures in Wonderland by Lewis Carroll (48778) (pg11).txt"
 ```
+
+## Problema 1 - Trabajo sobre el índice invertido
+Se agrega al menú principal una opción nueva para crear el indice invertido, con la diferencia de que en esta ocasión el proceso se realiza en paralelo.
+
+Este programa cuenta con las siguientes características:
+- Hilos configurables con `N_THREADS` y procesamiento por lotes `N_LOTE`.
+- Crea el mapa de libros con formato `id; nombre_libro`.
+- El archivo de salida `.idx` utiliza el id del libro en lugar del nombre.
+- Registra log del proceso de esta forma: `thread,book,word_count,start_us,end_us`.
+- Todos estos archivos creados se guardan en `data/indices/`.
 
 Se agregaron las siguientes variables de entorno al .env:
 ```
@@ -31,7 +32,27 @@ N_LOTE=8
 MAPA_LIBROS=data/indices/mapa_libros.txt
 INDICE-INVET-PARALELO=IndiceParalelo/bin/indice_paralelo
 ```
+
 ## Problema 2 - Trabajo sobre videojuego
+Se implementó un videojuego multijugador con arquitectura cliente-servidor que funciona con sockets. El juego consiste en una carrera por equipos donde los jugadores avanzan por un tablero lanzando dados en turnos. Los equipos compiten para llegar primero a la meta.
+
+Este programa cuenta con las siguientes características:
+- Modo multijugador: Múltiples clientes se conectan a un servidor centralizado.
+- Juego por equipos: Los jugadores se organizan en equipos.
+- Sistema de turnos: Los jugadores tiran dados y avanzan en el tablero de forma alternada.
+- Configuración flexible: Tamaño de tablero, dado y otras reglas configurables desde el archivo .env.
+
+Se agregaron las siguientes variables de entorno al .env:
+```
+GAME_BOARD_SIZE=30        # Tamaño del tablero (número de casillas)
+DICE_SIDES=6              # Número de caras del dado
+MIN_TEAMS=2               # Mínimo de equipos para iniciar
+MIN_PLAYERS_PER_TEAM=1    # Mínimo de jugadores por equipo
+MAX_TEAMS=4               # Máximo de equipos permitidos
+GAME_PORT=9000            # Puerto para el servidor del juego
+GAME_SERVER=bin/server    # Ruta al ejecutable del servidor
+GAME_CLIENT=bin/client    # Ruta al ejecutable del cliente
+```
 
 # Entregable 2 - Sistemas Operativos - Grupo 4
 ## Propósito de la aplicación

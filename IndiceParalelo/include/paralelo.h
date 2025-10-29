@@ -27,7 +27,8 @@ struct LogEntry {
 
 static unsigned int obtenerThreadsHardware();
 
-int pedirNumeroThreads(unsigned int maxThreads);
+// Pide cantidad de hilos a usar con validación estricta
+int pedirNumeroThreads(unsigned int maxThreadsH, int nThreadsEnv);
 
 long long procesarLote(const vector<fs::directory_entry>& lote,
                        int loteId,

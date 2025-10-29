@@ -5,6 +5,36 @@
 
 
 namespace {
+    // Verifica si existe una ruta en el filesystem
+    bool existeRuta(const std::string& p) {
+        struct stat st; return ::stat(p.c_str(), &st) == 0;
+    }
+
+    // Resuelve rutas relativas.
+    std::string resolverRutaEjecutable(const std::string& path) {
+        if (path.empty()) return path;
+        if (path[0] == '/') return path; // absoluta
+        if (existeRuta(path)) return path; // tal cual
+
+        // Probar con prefijo "Menu/" (cuando cwd es la raíz y el bin está dentro de Menu/)
+        std::string alt1 = std::string("Menu/") + path;
+        if (existeRuta(alt1)) return alt1;
+
+        // Probar relativo al padre (cuando cwd es Menu/ y el valor venía como "Menu/..." o similar)
+        std::string alt2 = std::string("../") + path;
+        if (existeRuta(alt2)) return alt2;
+
+        // Si empieza con "Menu/", probar quitando el prefijo
+        const std::string pref = "Menu/";
+        if (path.rfind(pref, 0) == 0) {
+            std::string sinPref = path.substr(pref.size());
+            if (existeRuta(sinPref)) return sinPref;
+            std::string alt3 = std::string("../") + sinPref;
+            if (existeRuta(alt3)) return alt3;
+        }
+
+        return path;
+    }
     // Lee un entero de forma segura desde stdin con validación básica.
     int leerEnteroSeguro() {
         int v;
@@ -339,13 +369,11 @@ void iniciarServidorJuego() {
     cout << "Presiona Ctrl+C para detener el servidor" << endl;
     cout << "=====================================" << endl;
     
-    // Ejecutar el servidor en un proceso separado
-    const char* server_bin = getenv("GAME_SERVER");
-    if (!server_bin) {
-        server_bin = "bin/server";
-    }
-    
-    int result = system(server_bin);
+    // Ejecutar el servidor
+    const char* server_bin_env = getenv("GAME_SERVER");
+    std::string server_bin = resolverRutaEjecutable(server_bin_env ? std::string(server_bin_env) : std::string("bin/server"));
+
+    int result = system(server_bin.c_str());
     if (result != 0) {
         cout << "Error al iniciar el servidor. Asegúrate de que el binario 'server' existe." << endl;
     }
@@ -377,8 +405,11 @@ void iniciarClienteJuego() {
     cout << "=====================================" << endl;
     
     // Construir comando para ejecutar el cliente
-    string comando = "bin/client " + host + " " + port_str + " " + username;
-    
+    const char* client_bin_env = getenv("GAME_CLIENT");
+    std::string client_bin = resolverRutaEjecutable(client_bin_env ? std::string(client_bin_env) : std::string("bin/client"));
+    auto q = [](const std::string& s){ return std::string("\"") + s + "\""; };
+    string comando = client_bin + " " + q(host) + " " + q(port_str) + " " + q(username);
+
     int result = system(comando.c_str());
     if (result != 0) {
         cout << "Error al conectar. Verifica que el servidor esté ejecutándose." << endl;

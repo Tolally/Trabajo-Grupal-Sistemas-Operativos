@@ -207,7 +207,7 @@ void reader_thread_func(int sock) {
             } 
             else if (type == "TURN_INFO") {
                 myTurn = false;
-                string turnInfo = parts.size()>1?parts[1]:"";
+                currentTurnInfo = parts.size()>1?parts[1]:"";
                 shouldRedraw = true;
             }
             else if (type == "ROLLING") {
@@ -326,8 +326,8 @@ int main(int argc, char** argv) {
         }
 
         if (myTurn) {
-            char c = tolower((unsigned char)line[0]);
-            if (c == 'r') {
+            // Aceptar 'r' o 'R' para lanzar.
+            if (line.size() == 1 && (line[0] == 'r' || line[0] == 'R')) {
                 if (!send_line(sock, make_msg("ROLL"))) {
                     lock_guard<mutex> lk(state_m);
                     currentTurnInfo = "⚠️  Error enviando ROLL";
@@ -335,7 +335,7 @@ int main(int argc, char** argv) {
                     break;
                 }
                 // No redibujar aquí, esperar respuesta del servidor
-            } else if (c == 'q') {
+            } else if (line == "q" || line == "Q" || line == "quit" || line == "QUIT") {
                 send_line(sock, make_msg("QUIT"));
                 running = false;
                 break;
