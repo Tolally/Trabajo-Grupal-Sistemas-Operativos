@@ -20,8 +20,9 @@ struct LogEntry {
     int threadId;
     std::string bookId;    // id numérico del libro (o filename si fallback)
     size_t wordCount;
-    long long start_ms;    // <--- cambió a milisegundos
-    long long end_ms;      // <--- cambió a milisegundos
+    long long start_ms;    
+    long long end_ms;      
+    long long dur_ms;
 };
 
 

@@ -256,7 +256,7 @@ void invertidoParalelo(){
                     timePerThread[t] += dur_ms;
 
                     // registrar log (cada hilo escribe sólo en partialLogs[t])
-                    partialLogs[t].push_back(LogEntry{t, docId, wordCount, start_ms, end_ms});
+                    partialLogs[t].push_back(LogEntry{t, docId, wordCount, start_ms, end_ms, dur_ms});
 
                     // construir salida legible (opcional)
                     out += "  [" + to_string(idx + 1) + "." + to_string(i + 1) + "] " + filename + "\n";
@@ -286,12 +286,13 @@ void invertidoParalelo(){
     fs::path rutaLog = carpetaIndices / (nombreArchivo + ".runlog.csv");
     ofstream logf(rutaLog);
     if (logf.is_open()) {
-        logf << "thread,book,word_count,start_us,end_us\n";
+        // cabecera en milisegundos
+        logf << "thread,book,word_count,start_ms,end_ms,dur_ms\n";
         for (int t = 0; t < useThreads; ++t) {
             for (const auto &e : partialLogs[t]) {
                 logf << e.threadId << ',' 
                      << '"' << e.bookId << '"' << ','
-                     << e.wordCount << ',' << e.start_ms << ',' << e.end_ms << '\n';
+                     << e.wordCount << ',' << e.start_ms << ',' << e.end_ms << ',' << e.dur_ms << '\n';
             }
         }
         logf.close();
@@ -304,12 +305,11 @@ void invertidoParalelo(){
         cerr << "Error: no se pudo guardar el índice final en " << rutaSalida << "\n";
     }
 
-    // resumen (convertir µs a ms si quieres)
+    // resumen (tiempos en ms)
     cout << "Resumen por thread:\n";
     for (int t = 0; t < useThreads; ++t) {
-        double ms = timePerThread[t] / 1000.0;
         cout << " Thread " << t << ": " << countPerThread[t]
-             << " lotes, tiempo total " << ms << " ms (" << timePerThread[t] << " µs)\n";
+             << " lotes, tiempo total " << timePerThread[t] << " ms\n";
     }
 
 
