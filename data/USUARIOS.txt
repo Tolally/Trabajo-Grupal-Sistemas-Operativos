@@ -2,3 +2,4 @@
 4;maria;mariaa;1234;ADMIN
 5;Nicolas;nico;12345;GENERAL
 6;Jared;12345;12345;ADMIN
+7;Bingus;Binguspro;polla;ADMIN
