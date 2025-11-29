@@ -91,6 +91,7 @@ int main(int argc, char** argv) {
         string rutaPerfiles = resolverRuta(getEnvOr("PERFILES_FILE", "data/PERFILES.TXT"));
         string rutaAdmin = resolverRuta(getEnvOr("ADMIN_SYS", ""));
         string rutaParalelo = resolverRuta(getEnvOr("INDICE-INVET-PARALELO",""));
+        string rutaAnalisis = resolverRuta(getEnvOr("ANALISIS_RENDIMIENTO", "Analisis_estadistica/bin/analisis_rendimiento"));
 
         // Cargar usuarios y autenticar
         auto usuarios = cargarUsuarios(rutaUsuarios);
@@ -161,6 +162,12 @@ int main(int argc, char** argv) {
                 case 8: {
                     limpiarConsola();
                     system(rutaParalelo.c_str());
+                    limpiarConsola();
+                    break;
+                }
+                case 10: {
+                    limpiarConsola();
+                    system(rutaAnalisis.c_str());
                     limpiarConsola();
                     break;
                 }
