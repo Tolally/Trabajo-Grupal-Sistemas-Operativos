@@ -93,6 +93,7 @@ int main(int argc, char** argv) {
         string rutaParalelo = resolverRuta(getEnvOr("INDICE-INVET-PARALELO",""));
         string rutaBuscador = resolverRuta(getEnvOr("BUSCADOR",""));
         string rutaAnalisis = resolverRuta(getEnvOr("ANALISIS_RENDIMIENTO", "Analisis_estadistica/bin/analisis_rendimiento"));
+        string rutaScriptStats = resolverRuta(getEnvOr("PYTHON_SCRIPT_STATS", ""));
 
         // Cargar usuarios y autenticar
         auto usuarios = cargarUsuarios(rutaUsuarios);
@@ -176,6 +177,12 @@ int main(int argc, char** argv) {
                     limpiarConsola();
                     system(rutaAnalisis.c_str());
                     limpiarConsola();
+                    break;
+                }
+                case 11: {
+                    limpiarConsola();
+                    string cmd = "python3 " + rutaScriptStats;
+                    system(cmd.c_str());
                     break;
                 }
                 default:

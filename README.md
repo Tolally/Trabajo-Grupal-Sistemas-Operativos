@@ -4,6 +4,22 @@
 - Matias Toledo
 - Carlos Duarte
 
+# Entregable 4 - Sistemas Operativos - Grupo 4
+Borrar bin´s:
+```
+make -C Menu clean && make -C IndiceParalelo clean && make -C User_Admin clean && make -C Buscador clean && make -C Analisis_estadistica clean
+```
+
+Compilar todo:
+```
+make -C Menu && make -C IndiceParalelo && make -C User_Admin && make -C Buscador && make -C Analisis_estadistica
+```
+
+Ejecutar (por ejemplo):
+```
+./Menu/bin/pgm -u Tolally -p 12345 -f "libros/010 - Alice's Adventures in Wonderland by Lewis Carroll (48778) (pg11).txt"
+```
+
 # Entregable 3 - Sistemas Operativos - Grupo 4
 Compilar:
 ```

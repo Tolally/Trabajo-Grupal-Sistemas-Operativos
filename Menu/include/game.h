@@ -6,6 +6,7 @@
 #include <vector>
 #include <random>
 #include <unordered_set>
+#include <chrono>
 
 struct ServerConfig {
     int boardSize = 50;
@@ -14,6 +15,7 @@ struct ServerConfig {
     int minPlayersPerTeam = 2;
     int maxTeams = 4;
     int port = 8080;
+    std::string statsFile;
 };
 
 enum class GameResult {
@@ -57,6 +59,11 @@ private:
     std::vector<char> team_symbols = {'*', '+', '^', '$'};
     std::map<std::string, char> team_to_symbol;
 
+    // Estadísticas del juego
+    int total_turns_played = 0;
+    std::chrono::steady_clock::time_point start_time;
+    std::chrono::steady_clock::time_point end_time;
+
     void build_play_order_round_robin();
     bool check_start_conditions();
     void assign_team_symbols();
@@ -94,6 +101,7 @@ public:
     int get_next_active_player();
     int get_team_player_count(const std::string& teamName);
     
+    void save_statistics_to_csv();
 };
 
 #endif

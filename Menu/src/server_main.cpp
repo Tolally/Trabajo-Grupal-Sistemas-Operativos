@@ -334,6 +334,10 @@ void handle_client(int client_sock) {
                     
                     this_thread::sleep_for(chrono::milliseconds(500));
                     broadcast_msg(make_msg2("END", "¡Equipo " + winner + " gana!"));
+                    
+                    // Guardar estadísticas
+                    G->save_statistics_to_csv();
+                    
                     G->reset_after_game();
                     
                     this_thread::sleep_for(chrono::milliseconds(100));
@@ -403,6 +407,7 @@ int main(int argc, char** argv) {
     if ((v = getenv("MIN_PLAYERS_PER_TEAM"))) cfg.minPlayersPerTeam = stoi(v);
     if ((v = getenv("MAX_TEAMS"))) cfg.maxTeams = stoi(v);
     if ((v = getenv("GAME_PORT"))) cfg.port = stoi(v);
+    if ((v = getenv("GAME_STATS_FILE"))) cfg.statsFile = v;
 
     cerr << endl;
     cerr << "╔══════════════════════════════════════╗" << endl;

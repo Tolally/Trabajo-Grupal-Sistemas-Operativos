@@ -29,7 +29,7 @@ def main():
     plt.grid(True)
     
     # Guardar acá
-    output_dir = "Analisis_estadistica/graficas"
+    output_dir = os.getenv("GRAFICO_RENDIMIENTO")
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
         
@@ -37,5 +37,4 @@ def main():
     plt.savefig(output_file)
     print(f"Gráfico guardado en: {output_file}")
 
-if __name__ == "__main__":
-    main()
+main()

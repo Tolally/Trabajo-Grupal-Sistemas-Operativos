@@ -6,6 +6,7 @@
 #include <sstream>
 #include <iomanip>
 #include <unordered_set>
+#include <fstream>
 
 using namespace std;
 
@@ -141,6 +142,10 @@ void Game::start_game_if_ready() {
     assign_team_symbols();
     build_play_order_round_robin();
     running = true;
+
+    // Iniciar estadísticas
+    total_turns_played = 0;
+    start_time = std::chrono::steady_clock::now();
 }
 
 void Game::advance_turn() {
@@ -182,6 +187,7 @@ pair<GameResult,int> Game::handle_roll(int id) {
     if (teams.find(team) == teams.end()) return {GameResult::ERROR, 0};
     
     teams[team].score += val;
+    total_turns_played++;
     
     bool game_ended = false;
     string winning_team;
@@ -189,6 +195,7 @@ pair<GameResult,int> Game::handle_roll(int id) {
         if (kv.second.score >= cfg.boardSize && is_team_active(kv.first)) {
             game_ended = true;
             winning_team = kv.first;
+            end_time = std::chrono::steady_clock::now();
             break;
         }
     }
@@ -205,6 +212,7 @@ pair<GameResult,int> Game::handle_roll(int id) {
     if (active_teams <= 1 && !last_active_team.empty()) {
         game_ended = true;
         winning_team = last_active_team;
+        end_time = std::chrono::steady_clock::now();
     }
     
     if (game_ended) {
@@ -392,4 +400,31 @@ int Game::get_team_player_count(const std::string& teamName) {
         }
     }
     return count;
+}
+
+// Guardar estadísticas del juego en un archivo CSV
+void Game::save_statistics_to_csv() {
+    std::ofstream file(cfg.statsFile, std::ios::app);
+    if (!file.is_open()) return;
+
+    file.seekp(0, std::ios::end);
+    if (file.tellp() == 0) {
+        file << "GameID,WinnerTeam,TotalTurns,NumPlayers,NumTeams,DurationSeconds\n";
+    }
+
+    auto duration = std::chrono::duration_cast<std::chrono::seconds>(end_time - start_time).count();
+    std::string winner = get_winner();
+    int num_players = players.size();
+    int num_teams = teams.size();
+    auto now = std::chrono::system_clock::now();
+    auto time = std::chrono::system_clock::to_time_t(now);
+    
+    file << time << "," 
+         << winner << "," 
+         << total_turns_played << "," 
+         << num_players << "," 
+         << num_teams << "," 
+         << duration << "\n";
+         
+    file.close();
 }

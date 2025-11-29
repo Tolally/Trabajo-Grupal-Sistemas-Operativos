@@ -67,6 +67,7 @@ int mostrarMenuPrincipal(const string& username, const string& perfil) {
     cout << "8) Crea índice invertido paralelo\n";
     cout << "9) Realizar Búsqueda\n";
     cout << "10) Análisis de rendimiento\n";
+    cout << "11) Estadísticas del juego\n";
     cout << "\nOpción : ";
     return leerEnteroSeguro();
 }
