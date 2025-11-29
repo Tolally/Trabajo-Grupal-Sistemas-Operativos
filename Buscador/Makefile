@@ -1,29 +1,26 @@
 CXX := g++
-CXXFLAGS := -std=c++17 -Wall -Wextra -g -O2
+CXXFLAGS := -std=c++17 -Wall -Wextra -g -O2 -Iinclude
 
-INC_DIR := include
-SRC_DIR := src
-BIN_DIR := bin
+SRCDIR := source
+BINDIR := bin
 
-SRCS := $(wildcard $(SRC_DIR)/*.cpp)
-OBJS := $(patsubst $(SRC_DIR)/%.cpp,$(BIN_DIR)/%.o,$(SRCS))
-TARGET := $(BIN_DIR)/buscador
+TARGETS := $(BINDIR)/buscador $(BINDIR)/cache $(BINDIR)/motor
 
-.PHONY: all clean run
+all: $(TARGETS)
 
-all: $(TARGET)
+$(BINDIR)/buscador: $(SRCDIR)/buscador.cpp
+	@mkdir -p $(BINDIR)
+	$(CXX) $(CXXFLAGS) -o $@ $<
 
-$(TARGET): $(OBJS) | $(BIN_DIR)
-	$(CXX) $(CXXFLAGS) -I$(INC_DIR) -o $@ $(OBJS)
+$(BINDIR)/cache: $(SRCDIR)/cache.cpp
+	@mkdir -p $(BINDIR)
+	$(CXX) $(CXXFLAGS) -o $@ $<
 
-$(BIN_DIR)/%.o: $(SRC_DIR)/%.cpp | $(BIN_DIR)
-	$(CXX) $(CXXFLAGS) -I$(INC_DIR) -c $< -o $@
-
-$(BIN_DIR):
-	mkdir -p $(BIN_DIR)
-
-run: all
-	$(TARGET)
+$(BINDIR)/motor: $(SRCDIR)/motor.cpp
+	@mkdir -p $(BINDIR)
+	$(CXX) $(CXXFLAGS) -o $@ $<
 
 clean:
-	rm -rf $(BIN_DIR)/*.o $(TARGET)
+	rm -rf $(BINDIR)/*.o $(TARGETS)
+
+.PHONY: all clean
