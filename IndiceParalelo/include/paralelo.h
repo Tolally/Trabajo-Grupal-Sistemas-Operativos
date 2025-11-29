@@ -39,6 +39,6 @@ long long procesarLote(const vector<fs::directory_entry>& lote,
 
 void mergeIndex (Index &dest, const Index &src);
 
-void invertidoParalelo();
+void invertidoParalelo(int threads = 0, std::string filename = "", bool autoMode = false);
 
 int main(int argc, char** argv);

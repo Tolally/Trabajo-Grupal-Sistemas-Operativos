@@ -91,10 +91,12 @@ void mergeIndex (Index &dest, const Index &src){
     }
 };
 
-void invertidoParalelo(){
-    cout << "==============================\n";
-    cout << " PID del proceso actual: " << getpid() << "\n";
-    cout << "==============================\n\n";
+void invertidoParalelo(int threads, string filename, bool autoMode){
+    if (!autoMode) {
+        cout << "==============================\n";
+        cout << " PID del proceso actual: " << getpid() << "\n";
+        cout << "==============================\n\n";
+    }
 
     unsigned int nThreadsMax = obtenerThreadsHardware();
     const char* envThreads = getenv("N_THREADS");
@@ -124,16 +126,22 @@ void invertidoParalelo(){
         return;
     }
 
-    int useThreads = pedirNumeroThreads(nThreadsMax, nThreadsEnv);
-    if (useThreads <= 0) {
-        cout << "Operación cancelada o número de threads inválido.\n";
+    int useThreads = 0;
+    if (autoMode) {
+        useThreads = threads;
+        if (useThreads <= 0) useThreads = 1;
+    } else {
+        useThreads = pedirNumeroThreads(nThreadsMax, nThreadsEnv);
+        if (useThreads <= 0) {
+            cout << "Operación cancelada o número de threads inválido.\n";
 
-        cout << "Presione Enter para volver...\n";
-        // descartar resto de la línea previa (si lo hay) antes de usar getline
-        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cout << "Presione Enter para volver...\n";
+            // descartar resto de la línea previa (si lo hay) antes de usar getline
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
-        getline(cin, salida);
-        return;
+            getline(cin, salida);
+            return;
+        }
     }
 
     // no crear más threads que lotes
@@ -154,22 +162,26 @@ void invertidoParalelo(){
 
     string nombreArchivo;
 
-    while (true) {
-        cout << "Ingrese nombre del archivo a crear (debe terminar en .idx, o '0' para cancelar): ";
-        cin >> nombreArchivo;
-        if (nombreArchivo == "0") { 
-            cout << "Operación cancelada por el usuario.\n"; 
-            cout << "Presione Enter para volver...\n";
-            // descartar resto de la línea previa (si lo hay) antes de usar getline
-            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    if (autoMode) {
+        nombreArchivo = filename;
+    } else {
+        while (true) {
+            cout << "Ingrese nombre del archivo a crear (debe terminar en .idx, o '0' para cancelar): ";
+            cin >> nombreArchivo;
+            if (nombreArchivo == "0") { 
+                cout << "Operación cancelada por el usuario.\n"; 
+                cout << "Presione Enter para volver...\n";
+                // descartar resto de la línea previa (si lo hay) antes de usar getline
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
-            getline(cin, salida);
-            return; 
+                getline(cin, salida);
+                return; 
+            }
+            if (nombreArchivo.size() >= 4 && nombreArchivo.substr(nombreArchivo.size() - 4) == ".idx") 
+                break;
+
+            cerr << "Error: el archivo debe tener extensión .idx\n";
         }
-        if (nombreArchivo.size() >= 4 && nombreArchivo.substr(nombreArchivo.size() - 4) == ".idx") 
-            break;
-
-        cerr << "Error: el archivo debe tener extensión .idx\n";
     }
 
     fs::path rutaSalida = carpetaIndices / nombreArchivo;
@@ -313,43 +325,52 @@ void invertidoParalelo(){
     }
 
 
-    // Opción para ver el log o no en pantalla
-    string verLog;
+    if (!autoMode) {
+        // Opción para ver el log o no en pantalla
+        string verLog;
 
-    while (true) {
-        cout << "Ingrese '1' si desea ver el LOG en pantalla ('0' para cancelar): ";
-        cin >> verLog;
-        if (verLog == "0") { 
-            cout << "Operación cancelada por el usuario.\n"; 
-            break; 
-        }
-        if (verLog == "1") {
-            // impresión secuencial en el hilo principal (sin concurrencia)
-            for (int t = 0; t < useThreads; ++t) {
-                cout << threadOutputs[t];
+        while (true) {
+            cout << "Ingrese '1' si desea ver el LOG en pantalla ('0' para cancelar): ";
+            cin >> verLog;
+            if (verLog == "0") { 
+                cout << "Operación cancelada por el usuario.\n"; 
+                break; 
             }
-            break;
+            if (verLog == "1") {
+                // impresión secuencial en el hilo principal (sin concurrencia)
+                for (int t = 0; t < useThreads; ++t) {
+                    cout << threadOutputs[t];
+                }
+                break;
+            }
+
+            cerr << "Error: debe ingresar '1' o '0'\n";
         }
 
-        cerr << "Error: debe ingresar '1' o '0'\n";
+        // espera para salir (comportamiento previo)
+        cout << "Presione Enter para volver...\n";
+        // descartar resto de la línea previa (si lo hay) antes de usar getline
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+        getline(cin, salida);
     }
-
-    // espera para salir (comportamiento previo)
-    cout << "Presione Enter para volver...\n";
-    // descartar resto de la línea previa (si lo hay) antes de usar getline
-    cin.ignore(numeric_limits<streamsize>::max(), '\n');
-
-    getline(cin, salida);
 
     return;
 }
 
 int main(int argc, char** argv) {
-    (void)argc;
-    (void)argv;
     try {
-        // Llama la función principal del módulo paralelo
-        invertidoParalelo();
+        if (argc >= 3) {
+            // Modo automático
+            int t = std::atoi(argv[1]);
+            std::string f = argv[2];
+            bool autom = false;
+            if (argc >= 4 && std::string(argv[3]) == "--auto") autom = true;
+            invertidoParalelo(t, f, autom);
+        } else {
+            // Modo interactivo
+            invertidoParalelo();
+        }
         return 0;
     } catch (const exception& ex) {
         cerr << "Error: " << ex.what() << endl;
