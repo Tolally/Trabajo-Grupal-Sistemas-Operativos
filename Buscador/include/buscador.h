@@ -1,4 +1,6 @@
 #include <iostream>
+#include <fstream>
+#include <sstream>
 #include <unistd.h>
 #include <cstring>
 #include <sys/socket.h>

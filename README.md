@@ -20,16 +20,142 @@ Ejecutar (por ejemplo):
 ./Menu/bin/pgm -u Tolally -p 12345 -f "libros/010 - Alice's Adventures in Wonderland by Lewis Carroll (48778) (pg11).txt"
 ```
 
-# Entregable 3 - Sistemas Operativos - Grupo 4
-Compilar:
+## Problema 1 - Buscador
+Se implementó un sistema de búsqueda sobre el índice invertido con arquitectura de 3 capas usando sockets:
+
 ```
-make -C Menu && make -C IndiceParalelo && make -C User_Admin
+┌─────────────┐     socket     ┌─────────────┐     socket     ┌─────────────┐
+│  Buscador   │ ────────────►  │    Cache    │ ────────────►  │    Motor    │
+│  (cliente)  │ ◄────────────  │  (servidor) │ ◄────────────  │  (servidor) │
+└─────────────┘    respuesta   └─────────────┘    respuesta   └─────────────┘
 ```
 
-Ejecutar (por ejemplo):
+### Componentes:
+- **Buscador**: Cliente que envía consultas al Cache y muestra la respuesta JSON.
+- **Cache**: Servidor intermedio que almacena búsquedas previas. Si tiene el resultado lo devuelve (HIT), si no consulta al Motor (MISS).
+- **Motor de Búsqueda**: Servidor que carga el índice invertido, busca la palabra y devuelve los TOP K resultados ordenados por frecuencia.
+
+### Características:
+- Comunicación entre procesos mediante sockets TCP.
+- Cache con tamaño configurable (`CACHE_SIZE`).
+- Motor devuelve los TOP K resultados (`TOPK`).
+- Respuesta en formato JSON con: query, origen (cache/motor), tiempos, y lista de libros con score.
+- El Motor hace mapeo inverso de ID a nombre real del libro usando el archivo MAPA_LIBROS.
+- El Buscador muestra su PID y la respuesta completa.
+
+### Formato de respuesta JSON:
+```json
+{
+  "query": "anillo",
+  "origen_respuesta": "cache",
+  "tiempo_cache_us": 1,
+  "tiempo_motor_us": 0,
+  "tiempo_total_us": 1,
+  "palabras_buscadas": 1,
+  "palabras_encontradas": 1,
+  "topK": 3,
+  "respuesta": [
+    {"libro": "El señor de los anillos", "score": 3},
+    {"libro": "Millitas", "score": 2},
+    {"libro": "Ojos rojos", "score": 1}
+  ]
+}
 ```
+
+### Variables de entorno:
+```
+CACHE_PORT=8080
+MOTOR_PORT=8081
+CACHE_SIZE=100
+TOPK=3
+INDICE_PATH=data/indices/indice.idx
+MAPA_LIBROS=data/indices/mapa_libros.txt
+```
+
+### Compilar y ejecutar:
+```bash
+# Compilar
+make -C Buscador
+
+# Ejecutar (en 3 terminales separadas):
+# Terminal 1 - Motor (primero)
+./Buscador/bin/motor
+
+# Terminal 2 - Cache (segundo)
+./Buscador/bin/cache
+
+# Terminal 3 - Buscador (Opcion 9 en Menu Principal)
 ./Menu/bin/pgm -u Tolally -p 12345 -f "libros/010 - Alice's Adventures in Wonderland by Lewis Carroll (48778) (pg11).txt"
 ```
+
+## Problema 2 - Análisis de rendimiento y estadísticas de juegos
+
+Este problema se divide en dos partes:
+
+### Parte A) Análisis de rendimiento del trabajo con threads
+
+Se creó un programa externo que permite ejecutar múltiples veces el índice invertido paralelo con diferentes cantidades de threads y registrar los tiempos de ejecución.
+
+#### Características:
+- Nueva opción de menú que llama al programa de análisis.
+- Permite configurar un arreglo de `CANT_THREADS` (ej: `[1, 2, 4, 8]`).
+- Realiza múltiples ejecuciones del índice invertido con cada configuración.
+- Registra el tiempo de ejecución en un archivo log con formato: `(CANT_THREADS, tiempo_ms)`.
+- Al finalizar, llama a un script Python que genera un gráfico de rendimiento (tiempo vs threads).
+- El gráfico se guarda como imagen en una carpeta configurable (no se muestra en pantalla).
+
+#### Variables de entorno:
+```
+CANT_THREADS=[1,2,4,8]
+RENDIMIENTO_LOG=data/logs/rendimiento.csv
+GRAFICOS_PATH=data/graficos/
+```
+
+#### Script Python (`analisis_rendimiento.py`):
+```bash
+python3 scripts/analisis_rendimiento.py
+```
+Genera: `data/graficos/rendimiento_threads.png`
+
+---
+
+### Parte B) Generación de estadísticas del juego
+
+Se creó un programa en Python que lee el log del juego (entrega anterior) y genera 4 gráficos estadísticos.
+
+#### Estadísticas implementadas:
+1. **Jugadores por equipo por partida**: Gráfico de barras agrupadas.
+2. **Posición final promedio por equipo**: Gráfico de barras.
+3. **Distribución de tiradas de dado**: Histograma.
+4. **Tiempo promedio por turno por jugador**: Gráfico de líneas.
+
+#### Características:
+- Lee el archivo de log del juego como base de datos.
+- Genera los 4 gráficos de una sola vez.
+- Guarda las imágenes en una carpeta específica (variable de entorno).
+- No muestra los gráficos en pantalla.
+
+#### Variables de entorno:
+```
+GAME_LOG=data/logs/game_log.csv
+ESTADISTICAS_PATH=data/graficos/juego/
+```
+
+#### Ejecutar:
+```bash
+python3 scripts/estadisticas_juego.py
+```
+
+Genera:
+- `data/graficos/juego/jugadores_por_equipo.png`
+- `data/graficos/juego/posicion_final_equipos.png`
+- `data/graficos/juego/distribucion_dado.png`
+- `data/graficos/juego/tiempo_por_turno.png`
+
+---
+
+# Entregable 3 - Sistemas Operativos - Grupo 4
+
 
 ## Problema 1 - Trabajo sobre el índice invertido
 Se agrega al menú principal una opción nueva para crear el indice invertido, con la diferencia de que en esta ocasión el proceso se realiza en paralelo.
@@ -169,7 +295,7 @@ make run
 ### 3. Ejemplo de uso 
 ```
 ==============================
-	Módulo - Gestión de Usuarios
+    Módulo - Gestión de Usuarios
 ==============================
 0) Salir
 1) Ingresar Usuarios

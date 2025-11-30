@@ -8,6 +8,38 @@ void limpiarConsola(){
     #endif
 }
 
+// asegurar que se pueda leer el env
+static void cargarDotEnvSiExiste() {
+    const char* already = getenv("__DOTENV_LOADED");
+    if (already && string(already) == "1") return;
+    const char* candidatas[] = { ".env", "../.env", "../../.env" };
+    for (const char* p : candidatas) {
+        ifstream f(p);
+        if (!f.is_open()) continue;
+        string linea;
+        while (getline(f, linea)) {
+            if (linea.empty() || linea[0] == '#') continue;
+            auto pos = linea.find('=');
+            if (pos == string::npos) continue;
+            string k = linea.substr(0, pos);
+            string v = linea.substr(pos + 1);
+            
+            // trim
+            while (!k.empty() && isspace(static_cast<unsigned char>(k.front()))) k.erase(0, 1);
+            while (!k.empty() && isspace(static_cast<unsigned char>(k.back()))) k.pop_back();
+            while (!v.empty() && isspace(static_cast<unsigned char>(v.front()))) v.erase(0, 1);
+            while (!v.empty() && isspace(static_cast<unsigned char>(v.back()))) v.pop_back();
+
+            if (k.empty()) continue;
+            if (!getenv(k.c_str())) {
+                setenv(k.c_str(), v.c_str(), 0);
+            }
+        }
+        setenv("__DOTENV_LOADED", "1", 1);
+        break;
+    }
+}
+
 string buscar(const string& palabra){
     const char* portEnv = getenv("CACHE_PORT");
     int cache_port = atoi(portEnv);
@@ -64,6 +96,7 @@ void iniciarBuscador() {
 }
 
 int main() {
+    cargarDotEnvSiExiste();
     string opcion;
 
     while (true) {
