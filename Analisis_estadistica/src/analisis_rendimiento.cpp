@@ -7,6 +7,7 @@
 #include <fstream>
 #include <unistd.h>
 #include <algorithm>
+#include <thread>
 
 using namespace std;
 
@@ -67,6 +68,9 @@ int main() {
     }
 
     cout << "=== Análisis de Rendimiento ===\n";
+    unsigned int maxThreads = std::thread::hardware_concurrency();
+    if (maxThreads == 0) maxThreads = 1;
+    cout << "Threads disponibles en el sistema: " << maxThreads << "\n";
     cout << "Ingrese la cantidad de threads a probar separados por espacio (ej: 1 2 4 8): ";
     string line;
     getline(cin, line);
@@ -96,6 +100,11 @@ int main() {
             int val = stoi(token);
             if (val <= 0) {
                 cout << "Error: El número de threads debe ser mayor a 0 ('" << token << "').\n";
+                error = true;
+                break;
+            }
+            if (val > (int)maxThreads) {
+                cout << "Error: El número de threads (" << val << ") supera el máximo del sistema (" << maxThreads << ").\n";
                 error = true;
                 break;
             }
