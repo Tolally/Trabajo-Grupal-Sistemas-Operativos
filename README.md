@@ -89,6 +89,10 @@ make -C Buscador
 ```
 
 ## Problema 2 - Análisis de rendimiento y estadísticas de juegos
+Antes de ejecutar los scripts del problema 2, es necesario instalar las bibliotecas `pandas` y `matplotlib`.
+```bash
+pip install pandas matplotlib
+```
 
 Este problema se divide en dos partes:
 
@@ -100,57 +104,70 @@ Se creó un programa externo que permite ejecutar múltiples veces el índice in
 - Nueva opción de menú que llama al programa de análisis.
 - Permite configurar un arreglo de `CANT_THREADS` (ej: `[1, 2, 4, 8]`).
 - Realiza múltiples ejecuciones del índice invertido con cada configuración.
-- Registra el tiempo de ejecución en un archivo log con formato: `(CANT_THREADS, tiempo_ms)`.
+- Registra el tiempo de ejecución en un archivo csv con formato: `(threads,time_ms)`.
 - Al finalizar, llama a un script Python que genera un gráfico de rendimiento (tiempo vs threads).
 - El gráfico se guarda como imagen en una carpeta configurable (no se muestra en pantalla).
 
 #### Variables de entorno:
 ```
-CANT_THREADS=[1,2,4,8]
-RENDIMIENTO_LOG=data/logs/rendimiento.csv
-GRAFICOS_PATH=data/graficos/
+ANALISIS_RENDIMIENTO=Analisis_estadistica/bin/analisis_rendimiento
+PYTHON_SCRIPT_PATH=Analisis_estadistica/scripts/grafico_rendimiento.py
+MAX_THREADS_ARRAY_LENGTH=10
+ANALISIS_LOG_PATH=data/rendimiento.csv
+ANALISIS_IDX_TEMP=test_perf.idx
+GRAFICO_RENDIMIENTO=Analisis_estadistica/graficas
 ```
 
-#### Script Python (`analisis_rendimiento.py`):
+#### Ejecutar:
+Elegir la opción 10 en el menú principal, luego la cantidad de threads deseados separados por un espacio.
 ```bash
-python3 scripts/analisis_rendimiento.py
+./Menu/bin/pgm -u Tolally -p 12345 -f "libros/010 - Alice's Adventures in Wonderland by Lewis Carroll (48778) (pg11).txt"
 ```
-Genera: `data/graficos/rendimiento_threads.png`
+Despues de registrar el tiempo de ejecución para cada cantidad de threads se ejecutará el script, generando el siguiente gráfico: `rendimiento.png`
 
 ---
 
 ### Parte B) Generación de estadísticas del juego
 
-Se creó un programa en Python que lee el log del juego (entrega anterior) y genera 4 gráficos estadísticos.
+Se creó un programa en Python que lee el CSV de estadísticas del juego y genera 4 gráficos estadísticos basados en los datos de las partidas jugadas.
+
+#### Formato del archivo:
+El servidor del juego genera automáticamente un archivo CSV con el siguiente formato (agrega una linea nueva por partida, por ejemplo para dos partidas diferentes):
+```csv
+GameID,WinnerTeam,TotalTurns,NumPlayers,NumTeams,DurationSeconds
+1764452433,Verde,18,4,2,53
+1764452664,Cuadrados,15,2,2,30
+```
 
 #### Estadísticas implementadas:
-1. **Jugadores por equipo por partida**: Gráfico de barras agrupadas.
-2. **Posición final promedio por equipo**: Gráfico de barras.
-3. **Distribución de tiradas de dado**: Histograma.
-4. **Tiempo promedio por turno por jugador**: Gráfico de líneas.
+1. **Victorias por equipo**: Gráfico de barras que muestra la cantidad de victorias de cada equipo.
+2. **Relación turnos vs duración**: Gráfico de dispersión que muestra la correlación entre el número total de turnos y la duración de la partida.
+3. **Cantidad de partidas por número de equipos**: Gráfico de barras que muestra cuántas partidas se jugaron con cierta cantidad de equipos.
+4. **Promedio de turnos por número de equipos**: Gráfico de barras que muestra el promedio de turnos necesarios para terminar una partida según la cantidad de equipos.
 
 #### Características:
-- Lee el archivo de log del juego como base de datos.
+- Lee el archivo de estadísticas del juego generado por el servidor.
 - Genera los 4 gráficos de una sola vez.
-- Guarda las imágenes en una carpeta específica (variable de entorno).
-- No muestra los gráficos en pantalla.
+- Guarda las imágenes en una carpeta específica (definida en la variable de entorno `GRAFICOS_ESTADISTICAS`).
 
 #### Variables de entorno:
 ```
-GAME_LOG=data/logs/game_log.csv
-ESTADISTICAS_PATH=data/graficos/juego/
+GAME_STATS_FILE=data/estadisticas_juego.csv
+GRAFICOS_ESTADISTICAS=Analisis_estadistica/graficas/estadisticas_juego
+PYTHON_SCRIPT_STATS=Analisis_estadistica/scripts/graficos_juego.py
 ```
 
 #### Ejecutar:
+Elegir la opción 11 en el menú principal y esperar unos instantes para que termine de ejecutarse el script.
 ```bash
-python3 scripts/estadisticas_juego.py
+./Menu/bin/pgm -u Tolally -p 12345 -f "libros/010 - Alice's Adventures in Wonderland by Lewis Carroll (48778) (pg11).txt"
 ```
 
-Genera:
-- `data/graficos/juego/jugadores_por_equipo.png`
-- `data/graficos/juego/posicion_final_equipos.png`
-- `data/graficos/juego/distribucion_dado.png`
-- `data/graficos/juego/tiempo_por_turno.png`
+Esto genera:
+- `Analisis_estadistica/graficas/estadisticas_juego/victorias_por_equipo.png`
+- `Analisis_estadistica/graficas/estadisticas_juego/turnos_vs_duracion.png`
+- `Analisis_estadistica/graficas/estadisticas_juego/partidas_por_num_equipos.png`
+- `Analisis_estadistica/graficas/estadisticas_juego/promedio_turnos_por_equipos.png`
 
 ---
 
