@@ -82,7 +82,7 @@ make -C Buscador
 ./Buscador/bin/motor
 
 # Terminal 2 - Cache (segundo)
-./Buscador/bin/cache
+./Buscador/bin/CACHE
 
 # Terminal 3 - Buscador (Opcion 9 en Menu Principal)
 ./Menu/bin/pgm -u Tolally -p 12345 -f "libros/010 - Alice's Adventures in Wonderland by Lewis Carroll (48778) (pg11).txt"
