@@ -97,6 +97,14 @@ void iniciarBuscador() {
 
 int main() {
     cargarDotEnvSiExiste();
+    // Validar existencia del archivo de índice antes de proporcionar el menú.
+    const char* envIndice = getenv("INDICE_PATH");
+    string rutaIndice = envIndice ? string(envIndice) : string("data/indices/indice.idx");
+    if (access(rutaIndice.c_str(), F_OK) != 0) {
+        cerr << "Buscador: Error - no se encontró el archivo de índice: " << rutaIndice << "\n";
+        cerr << "Por favor cree/cargue el índice antes de usar el BUSCADOR SistOpe.\n";
+        return 1;
+    }
     string opcion;
 
     while (true) {

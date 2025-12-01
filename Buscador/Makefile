@@ -4,15 +4,15 @@ CXXFLAGS := -std=c++17 -Wall -Wextra -g -O2 -Iinclude
 SRCDIR := source
 BINDIR := bin
 
-TARGETS := $(BINDIR)/buscador $(BINDIR)/cache $(BINDIR)/motor
+TARGETS := $(BINDIR)/BUSCADOR_SistOpe $(BINDIR)/CACHE $(BINDIR)/motor
 
 all: $(TARGETS)
 
-$(BINDIR)/buscador: $(SRCDIR)/buscador.cpp
+$(BINDIR)/BUSCADOR_SistOpe: $(SRCDIR)/buscador.cpp
 	@mkdir -p $(BINDIR)
 	$(CXX) $(CXXFLAGS) -o $@ $<
 
-$(BINDIR)/cache: $(SRCDIR)/cache.cpp
+$(BINDIR)/CACHE: $(SRCDIR)/cache.cpp
 	@mkdir -p $(BINDIR)
 	$(CXX) $(CXXFLAGS) -o $@ $<
 
@@ -25,13 +25,13 @@ run-motor: $(BINDIR)/motor
 	@if [ -f ../.env ]; then set -a; . ../.env; set +a; fi; \
 		cd .. && ./Buscador/bin/motor
 
-run-cache: $(BINDIR)/cache
+run-cache: $(BINDIR)/CACHE
 	@if [ -f ../.env ]; then set -a; . ../.env; set +a; fi; \
-		cd .. && ./Buscador/bin/cache
+		cd .. && ./Buscador/bin/CACHE
 
-run-buscador: $(BINDIR)/buscador
+run-buscador: $(BINDIR)/BUSCADOR_SistOpe
 	@if [ -f ../.env ]; then set -a; . ../.env; set +a; fi; \
-		cd .. && ./Buscador/bin/buscador
+		cd .. && ./Buscador/bin/BUSCADOR_SistOpe
 
 clean:
 	rm -rf $(BINDIR)/*.o $(TARGETS)
