@@ -98,7 +98,7 @@ static void insertarEnCache(const string& palabra, const string& resultado) {
 }
 
 // Agrega tiempo_cache_us y tiempo_total_us al JSON, y cambia origen si es HIT
-static string agregarTiemposAlJSON(const string& json, long tiempoCache_us, long tiempoMotor_us, bool esHit) {
+static string agregarTiemposAlJSON(const string& json, long tiempoCache_us, bool esHit) {
     string resultado = json;
     
     // Cambiar origen_respuesta si es HIT
@@ -109,14 +109,26 @@ static string agregarTiemposAlJSON(const string& json, long tiempoCache_us, long
         }
     }
     
-    // Buscar donde insertar tiempo_cache_us (después de tiempo_motor_us)
+    // Extraer tiempo_motor_us del JSON (siempre está presente)
+    long tiempoMotor_us = 0;
     size_t posMotor = resultado.find("\"tiempo_motor_us\":");
     if (posMotor != string::npos) {
-        // Encontrar el final del valor de tiempo_motor_us
+        size_t inicio = posMotor + 18;
+        size_t fin = resultado.find_first_of(",}", inicio);
+        if (fin != string::npos) {
+            string valorStr = resultado.substr(inicio, fin - inicio);
+            while (!valorStr.empty() && isspace(valorStr.front())) valorStr.erase(0, 1);
+            tiempoMotor_us = stol(valorStr);
+        }
+    }
+    
+    // Calcular tiempo total = cache + motor
+    long tiempoTotal = tiempoCache_us + tiempoMotor_us;
+    
+    // Buscar donde insertar tiempo_cache_us (después de tiempo_motor_us)
+    if (posMotor != string::npos) {
         size_t finValor = resultado.find(",", posMotor);
         if (finValor != string::npos) {
-            // Insertar tiempo_cache_us y tiempo_total_us después
-            long tiempoTotal = tiempoCache_us + tiempoMotor_us;
             string tiemposExtra = ",\n  \"tiempo_cache_us\": " + to_string(tiempoCache_us) +
                                   ",\n  \"tiempo_total_us\": " + to_string(tiempoTotal);
             resultado.insert(finValor, tiemposExtra);
@@ -203,38 +215,24 @@ void iniciarServidorCache() {
                 cout << "Cache: HIT (" << tiempoCache_us << " us)\n";
                 resultado = it->second;
                 
-                // Agregar tiempos (tiempo_motor_us = 0 porque no se consultó)
-                resultado = agregarTiemposAlJSON(resultado, tiempoCache_us, 0, true);
+                // Agregar tiempos (extrae tiempo_motor_us del JSON guardado)
+                resultado = agregarTiemposAlJSON(resultado, tiempoCache_us, true);
                 
             } else {
                 // CACHE MISS - consultar motor
                 cout << "Cache: MISS -> consultando motor\n";
                 
                 resultado = consultarMotor(palabra);
-                
-                // El tiempo del motor ya viene en el JSON, extraerlo
-                long tiempoMotor_us = 0;
-                size_t posMotor = resultado.find("\"tiempo_motor_us\":");
-                if (posMotor != string::npos) {
-                    size_t inicio = posMotor + 18; // largo de "tiempo_motor_us":
-                    size_t fin = resultado.find_first_of(",}", inicio);
-                    if (fin != string::npos) {
-                        string valorStr = resultado.substr(inicio, fin - inicio);
-                        // trim espacios
-                        while (!valorStr.empty() && isspace(valorStr.front())) valorStr.erase(0, 1);
-                        tiempoMotor_us = stol(valorStr);
-                    }
-                }
 
                 // Guardar solo si no es error
                 if (resultado.find("\"error\"") == string::npos) {
                     insertarEnCache(palabra, resultado);
                 }
                 
-                // Agregar tiempos al JSON
-                resultado = agregarTiemposAlJSON(resultado, tiempoCache_us, tiempoMotor_us, false);
+                // Agregar tiempos
+                resultado = agregarTiemposAlJSON(resultado, tiempoCache_us, false);
             }
-
+            cout <<"\n";
             ssize_t w = write(clientFd, resultado.c_str(), resultado.size());
             (void)w;  // ignorar warning
         }

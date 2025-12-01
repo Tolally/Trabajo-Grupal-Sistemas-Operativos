@@ -18,7 +18,7 @@ using namespace std;
 
 static string consultarMotor(const string& palabra);
 
-static string agregarTiemposAlJSON(const string& json, long tiempoCache_us, long tiempoMotor_us, bool esHit);
+static string agregarTiemposAlJSON(const string& json, long tiempoCache_us, bool esHit);
 
 static void insertarEnCache(const string& palabra, const string& resultado);
 
