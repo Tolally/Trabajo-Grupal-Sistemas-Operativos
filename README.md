@@ -64,12 +64,12 @@ Se implementó un sistema de búsqueda sobre el índice invertido con arquitectu
 
 ### Variables de entorno:
 ```
-CACHE_PORT=8080
-MOTOR_PORT=8081
+CACHE_PORT=8001
+MOTOR_PORT=8002
 CACHE_SIZE=100
 TOPK=3
 INDICE_PATH=data/indices/indice.idx
-MAPA_LIBROS=data/indices/mapa_libros.txt
+MAPA_LIBROS=data/indices/mapa.txt
 ```
 
 ### Compilar y ejecutar:
